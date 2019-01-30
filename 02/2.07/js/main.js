@@ -4,9 +4,12 @@
 *    2.7 - Loading external data
 */
 
-d3.tsv("data/ages.tsv").then(function(data){
-    data.forEach(function(d){
-        d.age = +d.age;
+d3.json("data/ages.json").then((data) => {
+    
+    // Casting to int
+    data.forEach(element => {
+        // Trick to casting
+        element.age = +element.age;
     });
 
     var svg = d3.select("#chart-area").append("svg")
@@ -19,21 +22,18 @@ d3.tsv("data/ages.tsv").then(function(data){
     circles.enter()
         .append("circle")
             .attr("cx", function(d, i){
-                console.log(d);
+                console.log(`Value ${d} at index ${i}`)
                 return (i * 50) + 25;
             })
             .attr("cy", 25)
             .attr("r", function(d){
+                console.log(`Value ${d.age}`)
                 return d.age * 2;
             })
-            .attr("fill", function(d){
-                if (d.name == "Tony") {
-                    return "blue";
-                }
-                else {
-                    return "red";
-                }
+            .attr("fill", (d) => {
+                if(d.name === 'Tony')
+                    return 'blue';
+                return 'red';
             });
-}).catch(function(error){
-    console.log(error);
 })
+.catch((error) => alert('Error: ' + error));
