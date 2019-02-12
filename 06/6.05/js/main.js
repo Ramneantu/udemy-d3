@@ -150,6 +150,17 @@ $("#continent-select")
         update(formattedData[time]);
     })
 
+$("#date-slider").slider({
+    max: 2014,
+    min: 1800,
+    value: 1800,
+    step: 1,
+    slide: function(event, ui){
+        time = ui.value - 1800;
+        update(formattedData[time]);
+    }
+})
+
 function step(){
     // At the end of our data, loop back
     time = (time < 214) ? time+1 : 0
@@ -195,4 +206,8 @@ function update(data) {
 
     // Update the time label
     timeLabel.text(+(time + 1800))
+    // Setting year next to slider to corespond
+    $("#year")[0].innerHTML = +(time + 1800);
+    // Slider slides slowly to the right
+    $("#date-slider").slider("value", +(time + 1800));
 }

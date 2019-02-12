@@ -59,6 +59,8 @@ d3.json("data/example.json").then(function(data) {
         d.year = parseTime(d.year);
         d.value = +d.value;
     });
+    
+    console.log(data);
 
     // Set scale domains
     x.domain(d3.extent(data, function(d) { return d.year; }));

@@ -10,6 +10,7 @@ var width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
 var flag = true;
+var t = d3.transition().duration(750);
     
 var g = d3.select("#chart-area")
     .append("svg")
@@ -88,24 +89,36 @@ function update(data) {
     var rects = g.selectAll("rect")
         .data(data);
 
-    // EXIT old elements not present in new data.
-    rects.exit().remove();
+    // EXIT old elements not present in new data
+    // We make their size 0 before deleting
+    rects.exit()
+        .attr("fill", "red")
+        .transition(t)
+        .attr("y", y(0))
+        .attr("height", 0)
+            .remove();
 
     // UPDATE old elements present in new data.
-    rects
+    rects.transition(t)
         .attr("y", function(d){ return y(d[value]); })
         .attr("x", function(d){ return x(d.month) })
         .attr("height", function(d){ return height - y(d[value]); })
         .attr("width", x.bandwidth);
 
     // ENTER new elements present in new data.
+    // We set them before the transition too so they grow from the bottom up
     rects.enter()
         .append("rect")
-            .attr("y", function(d){ return y(d[value]); })
             .attr("x", function(d){ return x(d.month) })
-            .attr("height", function(d){ return height - y(d[value]); })
             .attr("width", x.bandwidth)
-            .attr("fill", "grey");
+            .attr("fill", "grey")
+            .attr("y", y(0))
+            .attr("height", 0)
+            .transition(d3.transition().duration(500))
+                .attr("height", function(d){ return height - y(d[value]); })
+                .attr("y", function(d){ return y(d[value]); })
+                .attr("fill-opacity", 1);
+                
 
     var label = flag ? "Revenue" : "Profit";
     yLabel.text(label);

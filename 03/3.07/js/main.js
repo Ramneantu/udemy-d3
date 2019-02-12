@@ -23,11 +23,17 @@ d3.json("data/buildings.json").then(function(data){
         .range([0, 400])
         .paddingInner(0.3)
         .paddingOuter(0.3);
-
+    
+    /**
+     * min, max and extend
+     * take an array of data and a callback function
+     * extent returns an array with 2 items, the min and the max
+     */
+    console.log('here we are!');
     var y = d3.scaleLinear()
-        .domain([0, d3.max(data, function(d){
+        .domain(d3.extent(data, function(d){
             return d.height;
-        })])
+        }))
         .range([0, 400]);
 
     var rects = svg.selectAll("rect")

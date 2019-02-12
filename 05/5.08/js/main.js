@@ -106,6 +106,7 @@ function update(data) {
         .append("circle")
             .attr("fill", "grey")
             .attr("cy", y(0))
+            // We need to offset them because we now have the anchor in the center as opposed to the top left
             .attr("cx", function(d){ return x(d.month) + x.bandwidth() / 2 })
             .attr("r", 5)
             // AND UPDATE old elements present in new data.

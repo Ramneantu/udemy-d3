@@ -1,26 +1,80 @@
 /*
 *    main.js
 *    Mastering Data Visualization with D3.js
+* --------------------------------------------
 *    3.9 - Margins and groups
 */
 
-var margin = { left:100, right:10, top:10, bottom:100 };
+// var margin = { left:100, right:10, top:10, bottom:100 };
 
-var width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+// var width = 600 - margin.left - margin.right,
+//     height = 400 - margin.top - margin.bottom;
 
-var g = d3.select("#chart-area")
+// var g = d3.select("#chart-area")
+//     .append("svg")
+//         .attr("width", width + margin.left + margin.right)
+//         .attr("height", height + margin.top + margin.bottom)
+//     .append("g")
+//         .attr("transform", "translate(" + margin.left 
+//             + ", " + margin.top + ")")
+
+// d3.json("data/buildings.json").then(function(data){
+//     // console.log(data);
+
+//     data.forEach(function(d) {
+//         d.height = +d.height;
+//     });
+
+//     var x = d3.scaleBand()
+//         .domain(data.map(function(d){
+//             return d.name;
+//         }))
+//         .range([0, width])
+//         .paddingInner(0.3)
+//         .paddingOuter(0.3);
+
+//     var y = d3.scaleLinear()
+//         .domain([0, d3.max(data, function(d){
+//             return d.height;
+//         })])
+//         .range([0, height]);
+
+//     var rects = g.selectAll("rect")
+//         .data(data)
+        
+//     rects.enter()
+//         .append("rect")
+//             .attr("y", 0)
+//             .attr("x", function(d){ return x(d.name); })
+//             .attr("width", x.bandwidth)
+//             .attr("height", function(d){ return y(d.height); })
+//             .attr("fill", "grey");
+
+// });
+
+/*
+*    main.js
+*    Mastering Data Visualization with D3.js
+*    3.7 - D3 min, max, and extent
+*/
+
+var margins = {left:100, bottom:100, right:10, top:10};
+
+var width = 600 - margins.left - margins.right;
+var height = 400 - margins.top - margins.bottom;
+
+var svg = d3.select("#chart-area")
     .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-        .attr("transform", "translate(" + margin.left 
-            + ", " + margin.top + ")")
+    .attr("width", width + margins.left + margins.right)
+    .attr("height", height + margins.top + margins.bottom);
+
+var g = svg.append('g')
+        .attr("transform", 'translate(' + margins.left + ', ' + margins.top + ')');
 
 d3.json("data/buildings.json").then(function(data){
-    // console.log(data);
+    console.log(data);
 
-    data.forEach(function(d) {
+    data.forEach(d => {
         d.height = +d.height;
     });
 
@@ -28,25 +82,29 @@ d3.json("data/buildings.json").then(function(data){
         .domain(data.map(function(d){
             return d.name;
         }))
-        .range([0, width])
+        .range([0, 400])
         .paddingInner(0.3)
         .paddingOuter(0.3);
 
+    //console.log('here we are!');
     var y = d3.scaleLinear()
         .domain([0, d3.max(data, function(d){
             return d.height;
         })])
-        .range([0, height]);
+        .range([0, 400]);
 
     var rects = g.selectAll("rect")
         .data(data)
-        
-    rects.enter()
+        .enter()
         .append("rect")
-            .attr("y", 0)
-            .attr("x", function(d){ return x(d.name); })
-            .attr("width", x.bandwidth)
-            .attr("height", function(d){ return y(d.height); })
-            .attr("fill", "grey");
+        .attr("y", 0)
+        .attr("x", function(d){
+            return x(d.name);
+        })
+        .attr("width", x.bandwidth)
+        .attr("height", function(d){
+            return y(d.height);
+        })
+        .attr("fill", "grey");
 
-})
+});

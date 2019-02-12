@@ -59,7 +59,7 @@ d3.json("data/revenues.json").then(function(data){
 
     d3.interval(function(){
         update(data)
-    }, 1000);
+    }, 3000);
 
     // Run the vis for the first time
     update(data);
@@ -78,16 +78,31 @@ function update(data) {
         .tickFormat(function(d){ return "$" + d; });
     yAxisGroup.call(yAxisCall);
 
-/*    // Bars
+    
+    // DATA JOIN
     var rects = g.selectAll("rect")
         .data(data)
-        
+
+    // EXIT, remove old items
+    rects.exit().remove();
+    console.log("Through!");
+    // UPDATE, set attr for remaining items
+    rects 
+        .attr("y", function(d){ return y(d.revenue); })
+        .attr("x", function(d){ return x(d.month) })
+        .attr("height", function(d){ return height - y(d.revenue); })
+        .attr("width", x.bandwidth)
+        // No fill neces .attr("fill", "grey");
+
+    // ENTER, build new items, need to set the attr again
     rects.enter()
         .append("rect")
             .attr("y", function(d){ return y(d.revenue); })
             .attr("x", function(d){ return x(d.month) })
             .attr("height", function(d){ return height - y(d.revenue); })
             .attr("width", x.bandwidth)
-            .attr("fill", "grey");*/
+            .attr("fill", "grey");
+
+           
 }
 

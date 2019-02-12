@@ -41,7 +41,7 @@ g.append("text")
     .text("Month");
 
 // Y Label
-g.append("text")
+var yLabel = g.append("text")
     .attr("y", -60)
     .attr("x", -(height / 2))
     .attr("font-size", "20px")
@@ -49,16 +49,19 @@ g.append("text")
     .attr("transform", "rotate(-90)")
     .text("Revenue");
 
+var flag;
 d3.json("data/revenues.json").then(function(data){
     // console.log(data);
 
     // Clean data
     data.forEach(function(d) {
         d.revenue = +d.revenue;
+        d.profit = +d.profit;
     });
 
     d3.interval(function(){
         update(data)
+        flag = !flag;
     }, 1000);
 
     // Run the vis for the first time
@@ -66,8 +69,11 @@ d3.json("data/revenues.json").then(function(data){
 });
 
 function update(data) {
+    // Switch btw profit and revenue
+    var value = flag ? "revenue" : "profit";
+
     x.domain(data.map(function(d){ return d.month }));
-    y.domain([0, d3.max(data, function(d) { return d.revenue })])
+    y.domain([0, d3.max(data, function(d) { return d[value] })]);
 
     // X Axis
     var xAxisCall = d3.axisBottom(x);
@@ -85,21 +91,23 @@ function update(data) {
     // EXIT old elements not present in new data.
     rects.exit().remove();
 
-    // UPDATE old elements present in new data.
+    // UPDATE old elements present in new data. Runs every time but the first time, since the data stays the same
     rects
-        .attr("y", function(d){ return y(d.revenue); })
+        .attr("y", function(d){ return y(d[value]); })
         .attr("x", function(d){ return x(d.month) })
-        .attr("height", function(d){ return height - y(d.revenue); })
+        .attr("height", function(d){ return height - y(d[value]); })
         .attr("width", x.bandwidth);
 
-    // ENTER new elements present in new data.
+    // ENTER new elements present in new data. In our case it just runs the first time the update function is called
     rects.enter()
         .append("rect")
-            .attr("y", function(d){ return y(d.revenue); })
+            .attr("y", function(d){ return y(d[value]); })
             .attr("x", function(d){ return x(d.month) })
-            .attr("height", function(d){ return height - y(d.revenue); })
+            .attr("height", function(d){ return height - y(d[value]); })
             .attr("width", x.bandwidth)
             .attr("fill", "grey");
 
+    // Setting just the text here, the alignment stays the same!
+    yLabel.text(value);
 }
 

@@ -63,11 +63,12 @@ d3.json("data/revenues.json").then(function(data){
     });
 
     d3.interval(function(){
+        // We delete the first element of the array
         var newData = flag ? data : data.slice(1);
 
         update(newData)
         flag = !flag
-    }, 1000);
+    }, 3000);
 
     // Run the vis for the first time
     update(data);
@@ -89,6 +90,9 @@ function update(data) {
     yAxisGroup.transition(t).call(yAxisCall);
 
     // JOIN new data with old elements.
+    // We also provide an identifier for the elements of the array
+    // This is ONLY so that the trasition reflects the the actual bars that are changing
+    // Otw it would think that the whole array has changed, since it expects that elems retain order
     var rects = g.selectAll("rect")
         .data(data, function(d){
             return d.month;
@@ -102,8 +106,10 @@ function update(data) {
         .attr("height", 0)
         .remove();
 
+    // Makes sense, you enter new data and merge it with the old one
     // ENTER new elements present in new data...
     rects.enter()
+        // Applied only to the enter() selection
         .append("rect")
             .attr("fill", "grey")
             .attr("y", y(0))

@@ -18,6 +18,19 @@ var g = d3.select("#chart-area")
 
 var time = 0;
 
+// Tooltip
+var tip = d3.tip().attr('class' , 'd3-tip')
+            //The d is an object from our data array
+            .html(d => {
+                let text = "<strong>Country:</strong> <span style='color:red'>" + d.country + "</span><br>";
+                text += "<strong>Continent:</strong> <span style='color:red;text-transform:capitalize'>" + d.continent + "</span><br>";
+                text += "<strong>Life Expectancy:</strong> <span style='color:red'>" + d3.format(".2f")(d.life_exp) + "</span><br>";
+                text += "<strong>Income:</strong> <span style='color:red'>" + d3.format("$,.0f")(d.income) + "</span><br>";
+                text += "<strong>Population:</strong> <span style='color:red'>" + d3.format(",.0f")(d.population) + "</span><br>";
+                return text;
+            });
+g.call(tip);
+
 // Scales
 var x = d3.scaleLog()
     .base(10)
@@ -71,23 +84,28 @@ g.append("g")
 
 var continents = ["europe", "asia", "americas", "africa"];
 
+// Here begins the Legend
 var legend = g.append("g")
     .attr("transform", "translate(" + (width - 10) + 
         "," + (height - 125) + ")");
 
 continents.forEach(function(continent, i){
+    // Create a group for each row
     var legendRow = legend.append("g")
         .attr("transform", "translate(0, " + (i * 20) + ")");
 
+    // Add a colored rectangle for each row 
     legendRow.append("rect")
         .attr("width", 10)
         .attr("height", 10)
         .attr("fill", continentColor(continent));
 
+    // Add the text
     legendRow.append("text")
         .attr("x", -10)
         .attr("y", 10)
         .attr("text-anchor", "end")
+        // Use for CSS styles
         .style("text-transform", "capitalize")
         .text(continent);
 });
@@ -139,6 +157,9 @@ function update(data) {
         .append("circle")
         .attr("class", "enter")
         .attr("fill", function(d) { return continentColor(d.continent); })
+        // We attach the event listeners only once!
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide)
         .merge(circles)
         .transition(t)
             .attr("cy", function(d){ return y(d.life_exp); })
