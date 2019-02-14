@@ -10,6 +10,7 @@ class Node {
       this.y = y;
       this.isBlock = false;
       this.isFinal = false;
+      this.initial = false;
     }
   }
   
@@ -51,6 +52,7 @@ class Link {
     this.left = false;
     this.right = true;
     this.bidirectional = bidirectional;
+    this.selftransition = false;
     this.up = up;
     // Letter
     this.label = label;

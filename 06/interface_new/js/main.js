@@ -16,9 +16,10 @@ const svg = d3.select('body')
 //  - reflexive edges are indicated on the node (as a bold black circle).
 //  - links are always source < target; edge directions are set by 'left' and 'right'.
 
-let lastNodeId = 2;
+let lastNodeId = 3;
 // nodes, links and forces are just handles to the currently running simulation
-let nodes = [new SimpleNode(0, false), new SimpleNode(1, true), new SimpleNode(2, false)];
+let nodes = [new SimpleNode(1, false, 300, 400), new SimpleNode(2, true, 400, 500), new SimpleNode(3, false, 400, 300)];
+nodes[0].initial = true;
 let links = [new Link(nodes[0], nodes[1], 'a'), new Link(nodes[1], nodes[2], 'b')];
 let alphabet = ['a', 'b', 'c', 'd'];
 // init D3 force layout
@@ -36,8 +37,10 @@ const allNodesArr = new Array(nodes[0], nodes[1], nodes[2]);
 //  We store it as an array and use it like a Stack, always pushing the new
 //  context on top when focusing a block, and poping that context when we minimize the block 
 let contextStack = [];
+let showStackTrace = [];
 // Top of stack so to say
 let currentContext = root;
+let currentShow = true;
 
 
 // init D3 drag support
@@ -157,11 +160,11 @@ function perpendicularBisector(p1, p2, up, relative, absolute = 0, locked = true
   return {'x':supportX, 'y':supportY, 'm':m};
 }
 
-function perpendicularSlope(p1, p2){}
-
 function placeLabel(link){
   const lineData = getLinePoints(link);
   const slope = (lineData.points[2].y - lineData.points[0].y) / (lineData.points[2].x - lineData.points[0].x);
+  if(link.selftransition)
+    return {'x':link.source.x, 'y':link.target.y - 80, 'm':0};
   if(link.bidirectional)
     return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, link.up, 1/3, 15); 
   return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, slope > 0 ? true : false, 0, 8, false); 
@@ -205,6 +208,19 @@ function getLinePoints(link){
   const midpointX = (sourceX + targetX) / 2;
   const midpointY = (sourceY + targetY) / 2;
   let support = {'x':midpointX, 'y':midpointY, 'm':0};
+  if(link.selftransition){
+    // We need more points to define the curve in this case
+    const loopHeight = 60;
+    const loopWidth = 60;
+    sourceX = targetX = link.source.x;
+    sourceY = link.source.y - sourcePadding;
+    targetY = link.source.y - targetPadding + (link.target.isBlock ? 1 : 2);
+    support = {'x':sourceX, 'y':sourceY - loopHeight};
+    const left = {'x':sourceX - loopWidth/2, 'y':sourceY - loopHeight * .6};
+    const right = {'x':sourceX + loopWidth/2, 'y':sourceY - loopHeight * .6};
+    return {'points': [{ "x": sourceX,   "y": sourceY},  left, support, right, { "x": targetX,  "y": targetY}],
+    'slope': 0};
+  }
   if(link.bidirectional)
     support = perpendicularBisector({ "x": sourceX,   "y": sourceY},  { "x": targetX,  "y": targetY}, link.up, 1/3);
 
@@ -264,9 +280,7 @@ function restart() {
   path = path.data(currentContext.links, d => '' + d.source.id + d.target.id);
 
   // update existing links
-  path.selectAll('path').classed('selected', (d) => d === selectedLink)
-    //.style('marker-start', (d) => d.left ? 'url(#start-arrow)' : '')
-    //.style('marker-end', (d) => d.right ? 'url(#end-arrow)' : '');
+  path.selectAll('.link').classed('selected', (d) => d === selectedLink)
     .style('marker-end', 'url(#end-arrow)');
   // In case we changed label
   path.selectAll('text').text(d => d.label);
@@ -274,23 +288,26 @@ function restart() {
   // remove old links
   path.exit().remove();
 
-  const pg = path.enter().append('g').classed('pathGroup', true);
-  // add new links
-  pg.append('svg:path')
-    .attr('class', 'link')
-    .classed('selected', (d) => d === selectedLink)
-    // .style('marker-start', (d) => d.left ? 'url(#start-arrow)' : '')
-    // .style('marker-end', (d) => d.right ? 'url(#end-arrow)' : '')
-    .style('marker-end', 'url(#end-arrow)')
+  const pg = path.enter()
+    .append('g')
+    .classed('pathGroup', true)
     .on('mousedown', (d) => {
-      if (d3.event.ctrlKey) return;
-
+      if (d3.event.ctrlKey || d3.event.which === 3) return;
       // select link
       mousedownLink = d;
       selectedLink = (mousedownLink === selectedLink) ? null : mousedownLink;
       selectedNode = null;
       restart();
-    });
+    })
+    .on('contextmenu', d3.contextMenu(menuLink));
+  // add new links
+  pg.append('svg:path')
+    .attr('class', 'link')
+    .classed('selected', (d) => d === selectedLink)
+    .style('marker-end', 'url(#end-arrow)');
+    
+  pg.append('path')
+    .attr('class', 'wide')
   pg.append('text')
     .attr('text-anchor', 'middle')
     .text(d => d.label)
@@ -303,7 +320,9 @@ function restart() {
   circle = circle.data(currentContext.nodes.filter(el => !el.isBlock), (d) => d.id);
 
   // update existing nodes (reflexive & selected visual states)
-  circle.selectAll('.node')
+  circle.classed('initial', (d) => d.initial);
+  circle
+    .selectAll('.node')
     .style('fill', (d) => (d === selectedNode) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id))
     .classed('reflexive', (d) => d.reflexive);
 
@@ -311,12 +330,19 @@ function restart() {
   circle.exit().remove();
 
   // add new nodes
-  const g = circle.enter().append('svg:g').classed('circleGroup', true);
+  const g = circle.enter().append('svg:g')
+    .classed('circleGroup', true)
+    .classed('initial', (d) => d.initial);
+
+  // Customizing the initial node
+  d3.selectAll('.initial')
+    .append('path')
+    .classed('entry', true)
+    .style('marker-end', 'url(#end-arrow)')
+    .attr('d', d => `M ${-45},${0} L ${- SimpleNode.radius - 5},${0}`)
   
   // Adding halo around the nodes
   // Setting up a new group for each inserted node
-  
-  
   const haloGroup = g.append('g').classed('haloGroup', true);
   haloGroup
     .attr('display', 'none')
@@ -415,10 +441,6 @@ function restart() {
 
       // check for drag-to-self
       mouseupNode = d;
-      if (mouseupNode === mousedownNode) {
-        resetMouseVars();
-        return;
-      }
 
       // unenlarge target node
       d3.select(this).attr('transform', '');
@@ -432,11 +454,13 @@ function restart() {
       const reverseLink = currentContext.links.filter((l) => l.source === target && l.target === source)[0];
       let modifiedLink = link
       if(link)
-        link.label += ' ' + label;
+        link.label += link.label.includes(label) ? '' : ' ' + label;
       else{
         let newLink = new Link(source, target, label);
         modifiedLink = newLink;
-        if(!reverseLink){
+        if(source === target)
+          newLink.selftransition = true;
+        else if(!reverseLink){
           newLink.bidirectional = false;
           newLink.up = source < target;
         }
@@ -477,7 +501,7 @@ function restart() {
 
   // add new nodes
   const rg = rect.enter().append('svg:g')
-/****************************************** */
+/************* Overlay ****************** */
   const overlayGroup = rg.append('g').classed('overlayGroup', true);
   overlayGroup
     .attr('display', 'none')
@@ -569,29 +593,11 @@ function restart() {
       d3.select(this).attr('transform', '');
     })
     .on('mousedown', (d) => {
-      // Saving context
       if(d3.event.ctrlKey || d3.event.which === 3 || contextOpen) return;
-      // mouseLifted = false;
-      //mousedownNode = d;
       timer = setTimeout(() => {  
-// TODO Remember to change
-        // mousedownLetter = 'a';
         if(!prevent){
-          // select node, if selected deselect
-          // if(mouseLifted)
-          //   mousedownNode = null;
           selectedNode = (d === selectedNode) ? null : d;
           selectedLink = null;
-
-          // reposition drag line
-          // if(!mouseLifted){
-          //   dragLine
-          //     .style('marker-end', 'url(#end-arrow)')
-          //     .attr('d', `M${mousedownNode.x},${mousedownNode.y}L${mousedownNode.x},${mousedownNode.y}`);
-          //   dragGroup
-          //     .attr('display', 'block');
-          // }
-
           restart();
         }
         prevent = false;
@@ -615,10 +621,6 @@ function restart() {
 
       // check for drag-to-self
       mouseupNode = d;
-      if (mouseupNode === mousedownNode) {
-        resetMouseVars();
-        return;
-      }
 
       // unenlarge target node
       d3.select(this).attr('transform', '');
@@ -631,15 +633,18 @@ function restart() {
       const reverseLink = currentContext.links.filter((l) => l.source === target && l.target === source)[0];
       let modifiedLink = link;
       if(link)
-        link.label += ' ' + label;
+        link.label += link.label.includes(label) ? '' : ' ' + label;
       else{
         let newLink = new Link(source, target, label);
         modifiedLink = newLink;
-        if(!reverseLink){
+        if(source === target){
+          newLink.selftransition = true;
+        }
+        else if(!reverseLink){
           newLink.bidirectional = false;
           newLink.up = source < target;
         }
-        else {
+        else{
           newLink.bidirectional = true;
           reverseLink.bidirectional = true;
           newLink.up = source < target;
@@ -672,16 +677,24 @@ function restart() {
   currentContext.force.alpha(.5).alphaTarget(.0).alphaDecay(.04).restart();
 }
 
-function pushContext(newContext){
+function pushContext(newContext, hierachical = true){
+  if(newContext === currentContext)
+    return;
   contextStack.push(currentContext);
-  replaceContext(newContext);
+  showStackTrace.push(currentShow);
+  replaceContext(newContext, hierachical);
 }
 
 function popContext(){
-  replaceContext(contextStack.pop());
+  replaceContext(contextStack.pop(), showStackTrace.pop());
 }
 
-function replaceContext(newContext){
+function replaceContext(newContext, hierachical = true){
+
+  // Getting rid of input box on context change
+  d3.selectAll('.input-field').style('display', 'none');
+  formOpen = false;
+  d3.select('.form-rect').remove();
  
   rect.remove();
   circle.remove();
@@ -709,8 +722,9 @@ function replaceContext(newContext){
       .attr('fill', 'white')
       .on('mousedown', () => d3.event.stopPropagation());
 
+    svg.selectAll('.header').remove();
     let header = svg.selectAll('.header').data([newContext], (d) => d.id);
-    header.exit().remove();
+    // header.exit().remove();
     // Header gets rendered from scratch every time
     headerGroup = header.enter()
       .append('g')
@@ -745,68 +759,74 @@ function replaceContext(newContext){
       .attr('y', BlockNode.headerHeight/2 + 6)
       .style('font-size', '22')
       .style('font-weight', 'bold')
-      .text(d => d.desc)
+      .text(d => {
+        console.log(d.desc);
+        return d.desc;})
       .node()
       .getComputedTextLength()
       / 2 + 8;
     // Stack trace
-    for(let i = contextStack.length - 1; i >= Math.max(0, contextStack.length - 3); i--){
-      const inter = 24;
-      const block = contextStack[i];
-      const smallRectGroup = headerGroup.append('g').classed('smallRect', true);
-      smallRectGroup.data([contextStack[i]], (d) => d.id)
-      const slotWidth = smallRectGroup.append('text')
-        .style('font-size', '18')
-        .text(block.desc)
-        .node()
-        .getComputedTextLength()
-        * 1.2;
-      const rectHeight = 34;
-      smallRectGroup.insert('rect', 'text')
-        .attr('width', slotWidth)
-        .attr('height', rectHeight)
-        .style('fill', '#e3e3e5')
-        .style('stroke', '#2f3033')
-        .style('cursor', 'pointer')
-        .on('mousedown', () => {
-          d3.event.stopPropagation();
-          while(contextStack.pop() !== block);
-          replaceContext(block);
-        })
-      smallRectGroup.append('path')
-        .attr('d', `M ${slotWidth} ${rectHeight/2} L ${slotWidth + inter - 4} ${rectHeight/2}`)
-        .style('stroke-width', '4')
-        .style('stroke', 'black')
-        .style('marker-end', 'url(#end-arrow)')
-      smallRectGroup.select('text')
-        .attr('x', slotWidth * 0.1)
-        .attr('y', rectHeight / 2 + 6);
-      smallRectGroup.attr('transform', `translate(${BlockNode.maximizedWidth/2 - compoundWidth - slotWidth - inter},${BlockNode.headerHeight/2 - rectHeight/2})`);
-      compoundWidth += slotWidth + inter;
-      // Last element, still a couple to go
-      if(i === contextStack.length - 3 && i !== 0){
+    if(hierachical){
+      for(let i = contextStack.length - 1; i >= Math.max(0, contextStack.length - 3); i--){
+        const inter = 24;
+        const block = contextStack[i];
+        const smallRectGroup = headerGroup.append('g').classed('smallRect', true);
+        smallRectGroup.data([contextStack[i]], (d) => d.id)
+        const slotWidth = smallRectGroup.append('text')
+          .style('font-size', '18')
+          .text(block.desc)
+          .node()
+          .getComputedTextLength()
+          * 1.2;
+        const rectHeight = 34;
+        smallRectGroup.insert('rect', 'text')
+          .attr('width', slotWidth)
+          .attr('height', rectHeight)
+          .style('fill', '#e3e3e5')
+          .style('stroke', '#2f3033')
+          .style('cursor', 'pointer')
+          .on('mousedown', () => {
+            d3.event.stopPropagation();
+            while(contextStack.pop() !== block);
+            replaceContext(block);
+          })
         smallRectGroup.append('path')
-        .attr('d', `M ${-inter} ${rectHeight/2} L ${-4} ${rectHeight/2}`)
-        .style('stroke-width', '4')
-        .style('stroke', 'black')
-        .style('marker-end', 'url(#end-arrow)')
-        smallRectGroup.append('text')
-          .style('font-size', '24')
-          .style('font-weight', 'bold')
-          .attr('x', -inter-42)
-          .attr('y', rectHeight / 2 + 12)
-          .text('. . .')
+          .attr('d', `M ${slotWidth} ${rectHeight/2} L ${slotWidth + inter - 4} ${rectHeight/2}`)
+          .style('stroke-width', '4')
+          .style('stroke', 'black')
+          .style('marker-end', 'url(#end-arrow)')
+        smallRectGroup.select('text')
+          .attr('x', slotWidth * 0.1)
+          .attr('y', rectHeight / 2 + 6);
+        smallRectGroup.attr('transform', `translate(${BlockNode.maximizedWidth/2 - compoundWidth - slotWidth - inter},${BlockNode.headerHeight/2 - rectHeight/2})`);
+        compoundWidth += slotWidth + inter;
+        // Last element, still a couple to go
+        if(i === contextStack.length - 3 && i !== 0){
+          smallRectGroup.append('path')
+          .attr('d', `M ${-inter} ${rectHeight/2} L ${-4} ${rectHeight/2}`)
+          .style('stroke-width', '4')
+          .style('stroke', 'black')
+          .style('marker-end', 'url(#end-arrow)')
+          smallRectGroup.append('text')
+            .style('font-size', '24')
+            .style('font-weight', 'bold')
+            .attr('x', -inter-42)
+            .attr('y', rectHeight / 2 + 12)
+            .text('. . .')
 
+        }
       }
     }
     // Header Return button
     const buttonWidth = 50;
     const buttonHeight = 25;
+    const rightPadding = 25;
+    const inter = 20;
     headerGroup.append('g')
-      .classed('buttonGroup', true)
-      .attr('transform', `translate(${BlockNode.maximizedWidth - buttonWidth/2 - 25}, ${BlockNode.headerHeight/2})`);        
-    const buttonGroup = headerGroup.selectAll('.buttonGroup');
-    buttonGroup.append('rect')
+      .classed('returnGroup', true)
+      .attr('transform', `translate(${BlockNode.maximizedWidth - buttonWidth/2 - rightPadding}, ${BlockNode.headerHeight/2})`);        
+    const returnGroup = headerGroup.selectAll('.returnGroup');
+    returnGroup.append('rect')
       .attr('width', buttonWidth)
       .attr('height', buttonHeight)
       .attr('x', -buttonWidth/2)
@@ -818,12 +838,40 @@ function replaceContext(newContext){
         d3.event.stopPropagation();
         popContext();
       });
-    buttonGroup.append('text')
+    returnGroup.append('text')
       .attr('text-anchor', 'middle')
       .attr('x', 0)
       .attr('y', 5)
       .style("font-size", "14")
       .text('Return');
+
+    // Home Button
+    headerGroup.append('g')
+      .classed('homeGroup', true)
+      .attr('transform', `translate(${BlockNode.maximizedWidth - buttonWidth*3/2 - rightPadding - inter}, ${BlockNode.headerHeight/2})`);        
+    const homeGroup = headerGroup.selectAll('.homeGroup');
+    homeGroup.append('rect')
+      .attr('width', buttonWidth)
+      .attr('height', buttonHeight)
+      .attr('x', -buttonWidth/2)
+      .attr('y',  -buttonHeight/2)
+      .attr('fill', '#e3e3e5')
+      .style('stroke', '#2f3033')
+      .style('cursor', 'pointer')
+      .on('mousedown', () => {
+        d3.event.stopPropagation();
+        while(contextStack.length > 1){
+          contextStack.pop();
+          showStackTrace.pop();
+        }
+        popContext();
+      });
+    homeGroup.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('x', 0)
+      .attr('y', 5)
+      .style("font-size", "14")
+      .text('Home');
   }
 
   currentContext.force.stop();
@@ -834,11 +882,19 @@ function replaceContext(newContext){
       .force('charge', d3.forceManyBody().strength(-500))
       .force('x', d3.forceX(width / 2))
       .force('y', d3.forceY(height / 2))
-      //.size([BlockNode.maximizedWidth, BlockNode.maximizedHeight - BlockNode.headerHeight])
       .on('tick', tick.bind(this, (width - BlockNode.maximizedWidth)/2, (height - BlockNode.maximizedHeight)/2 + BlockNode.headerHeight, BlockNode.maximizedWidth, BlockNode.maximizedHeight - BlockNode.headerHeight));
   }
+  // Check if we have initial
+  if(newContext.nodes.filter(d => d.initial).length === 0){
+    let node = new SimpleNode(++lastNodeId, false, width/3, height/2);
+    node.initial = true;
+    newContext.nodes.push(node);
+    syncNode(node);
+  }
+
   newContext.force.restart();
   currentContext = newContext;
+  currentShow = hierachical;
 
   path = svg.append('svg:g').classed('edges', true).selectAll('path');
   circle = svg.append('svg:g').classed('simple', true).selectAll('g');
@@ -972,6 +1028,15 @@ function closeForm(){
   restart();
 }
 
+function descInStack(desc){console.log('here');
+  let ret = false;
+  contextStack.forEach(d => {
+    if(d.desc === desc)
+      ret = true;
+  })
+  return ret;
+}
+
 let blockInsertCoordinates;
 function addBlock() {
   // because :active only works in WebKit?
@@ -1000,7 +1065,7 @@ function addBlock() {
       .on('keydown', (e) => {
         if(e.keyCode === 10 || e.keyCode === 13){
           e.preventDefault();
-          if($('#desc').val() === currentContext.desc){
+          if($('#desc').val() === currentContext.desc || descInStack($('#desc').val())){
             $('#desc')
               .css('background', 'rgba(255,0,0,0.7)')
               .blur()
@@ -1032,7 +1097,6 @@ function addBlock() {
     .attr('y', blockInsertCoordinates[1] - BlockNode.minimizedHeight/2 + 2)
     .style('fill', '#4087f9')
     .style('stroke', (d) => d3.rgb('#4087f9').darker().toString())
-  //const formGroup = formEnter.merge(d3.selectAll('.input-field'))
 }
 
 function mousemove() {
@@ -1070,7 +1134,7 @@ function spliceLinksForNode(node) {
 
 // Deletes only if selected
 function deleteSelected() {
-  if (selectedNode) {
+  if (selectedNode && !selectedNode.initial) {
     spliceLinksForNode(selectedNode);
     syncRemoveNode(selectedNode);
     currentContext.nodes.splice(currentContext.nodes.indexOf(selectedNode), 1);
@@ -1134,7 +1198,7 @@ initToolbar();
 svg.on('mousedown', function(){
   //Ignore right clicks
   if(formOpen){
-    if($('#desc').val() === currentContext.desc){
+    if($('#desc').val() === currentContext.desc || descInStack($('#desc').val())){
       $('#desc')
         .css('background', 'rgba(255,0,0,0.7)')
         .blur()

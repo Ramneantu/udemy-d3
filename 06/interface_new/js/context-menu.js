@@ -44,14 +44,22 @@ var menuBlock = [{
 var menuToolboxBlock = [{
 	title: 'Add',
 	action: function(elm, d, i){
-		pushContext(d);
+			addFromToolbar(d);
 		}
 }, {
 	title: 'Edit',
 	action: function(elm, d, i) {
-		selectedNode = d;
-		deleteSelected.call(elm);
+		pushContext(d, false)
 	}
+}
+]
+
+var menuLink = [{
+	title: 'Remove',
+	action: function(elm, d, i){
+			selectedLink = d;
+			deleteSelected(d);
+		}
 }
 ]
 
