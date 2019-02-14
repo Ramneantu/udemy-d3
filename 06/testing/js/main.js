@@ -238,6 +238,7 @@ function restart() {
       restart();
     })
     .on('mouseup', function (d) {
+      console.log('mouseup node');
       if (!mousedownNode) return;
 
       // needed by FF
@@ -315,6 +316,7 @@ function mousemove() {
 }
 
 function mouseup() {
+  console.log('mouseup canvas')
   if (mousedownNode) {
     // hide drag line
     dragLine

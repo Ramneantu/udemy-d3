@@ -10,6 +10,19 @@
 	z-index:1200;
 }
 
+.input-field {
+	position: absolute;
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	display: none;
+	z-index:1200;
+}
+
+input[type=text]:focus {
+	outline: none;
+	border: 3px solid #555;
+  }
+
 .d3-context-menu ul {
 	list-style-type: none;
 	margin: 4px 0px;

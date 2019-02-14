@@ -31,6 +31,8 @@ class BlockNode extends Node {
   // Standard Dimenstions
   static minimizedHeight = 40;
   static minimizedWidth = 80;
+  static overlayHeight = 75;
+  static overlayWidth = 115;
 }
   
 class SimpleNode extends Node {
@@ -42,16 +44,23 @@ class SimpleNode extends Node {
 }
 
 class Link {
-  constructor(source, target, label = '', bidirectional = false){
+  constructor(source, target, label = '', bidirectional = false, up = true){
     // Source and target attributes are required by the simulation
     this.source = source;
     this.target = target;
     this.left = false;
     this.right = true;
     this.bidirectional = bidirectional;
-    this.up = true;
+    this.up = up;
     // Letter
     this.label = label;
+  }
+}
+
+class Tuple {
+  constructor(first, second){
+    this.first = first;
+    this.second = second;
   }
 }
   
