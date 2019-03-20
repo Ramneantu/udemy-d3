@@ -15,21 +15,21 @@ svg:not(.active):not(.ctrl) {
 path.link {
   fill: none;
   stroke: #000;
-  stroke-width: 4px;
+  stroke-width: 2.5px;
   cursor: pointer;
 }
 
 path.entry{
   fill: none;
   stroke: #000;
-  stroke-width: 4px;
+  stroke-width: 2.5px;
 }
 
 path.wide {
   fill: none;
-  stroke: #000;
-  stroke-opacity: 0;
-  stroke-width: 18px;
+  stroke: rgb(255, 238, 0);
+  stroke-opacity: 0.5;
+  stroke-width: 10px;
   cursor: pointer;
 }
 

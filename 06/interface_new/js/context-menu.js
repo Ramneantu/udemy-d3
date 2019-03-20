@@ -1,73 +1,73 @@
-var menuEmptyArea = [{
-    title: 'Add a block',
-    action: function(elm, d, i) {
-		addBlock.call(elm);
-    }
-  }, {
-    title: 'Add a node',
-    action: function(elm, d, i) {
-		addNode.call(elm);
-    }
-	}];
+// var menuEmptyArea = [{
+//     title: 'Add a block',
+//     action: function(elm, d, i) {
+// 		addBlock.call(elm);
+//     }
+//   }, {
+//     title: 'Add a node',
+//     action: function(elm, d, i) {
+// 		addNode.call(elm);
+//     }
+// 	}];
 	
-var menuNode = [
-	{
-		title: 'Toggle final',
-		action: function(elm, d, i){
-			d.reflexive = !d.reflexive;
-			restart();
-		}
-	},
-	{
-		title: 'Remove',
-		action: function(elm, d, i) {
-			selectedNode = d;
-			deleteSelected.call(elm);
-		}
-	}
-]
+// var menuNode = [
+// 	{
+// 		title: 'Toggle final',
+// 		action: function(elm, d, i){
+// 			d.reflexive = !d.reflexive;
+// 			restart();
+// 		}
+// 	},
+// 	{
+// 		title: 'Remove',
+// 		action: function(elm, d, i) {
+// 			selectedNode = d;
+// 			deleteSelected.call(elm);
+// 		}
+// 	}
+// ]
 
-var menuBlock = [{
-		title: 'Expand',
-		action: function(elm, d, i){
-			pushContext(d);
-			}
-	}, {
-		title: 'Remove',
-		action: function(elm, d, i) {
-			selectedNode = d;
-			deleteSelected.call(elm);
-		}
-	}
-]
+// var menuBlock = [{
+// 		title: 'Expand',
+// 		action: function(elm, d, i){
+// 			pushContext(d);
+// 			}
+// 	}, {
+// 		title: 'Remove',
+// 		action: function(elm, d, i) {
+// 			selectedNode = d;
+// 			deleteSelected.call(elm);
+// 		}
+// 	}
+// ]
 
-var menuToolboxBlock = [{
-	title: 'Add',
-	action: function(elm, d, i){
-			addFromToolbar(d);
-		}
-}, {
-	title: 'Edit',
-	action: function(elm, d, i) {
-		pushContext(d, false)
-	}
-}
-]
+// var menuToolboxBlock = [{
+// 	title: 'Add',
+// 	action: function(elm, d, i){
+// 			toolbar.add(d);
+// 		}
+// }, {
+// 	title: 'Edit',
+// 	action: function(elm, d, i) {
+// 		pushContext(d, false)
+// 	}
+// }
+// ]
 
-var menuLink = [{
-	title: 'Remove',
-	action: function(elm, d, i){
-			selectedLink = d;
-			deleteSelected(d);
-		}
-}
-]
+// var menuLink = [{
+// 	title: 'Remove',
+// 	action: function(elm, d, i){
+// 			selectedLink = d;
+// 			deleteSelected(d);
+// 		}
+// }
+// ]
 
 
 /*******************************
  * Actual Contextmenu Call
  */
-
+let contextOpen;
 d3.contextMenu = function (menu, openCallback) {
 
     // create the div element that will hold the context menu

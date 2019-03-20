@@ -24,6 +24,96 @@ class BlockNode extends Node {
     this.links = links;
     this.force = force;
   }
+  export(){
+    let states = '<stateSet>\n';
+    this.nodes.forEach(d => {
+      if(!d.isBlock)
+        states += `<state sid='${d.id}' initial='${d.initial}' final='${d.reflexive}' posX='${d.x}' posY='${d.y}'/>\n`;
+      else
+        states += d.export();
+    })
+    states += '</stateSet>\n'
+    let initialState = '';
+    this.nodes.forEach(d => {
+      if(d.initial)
+        initialState = "<initialState><state sid='" + d.id + "' /></initialState>\n";
+    })
+    let acc = '<acceptingSet>\n';
+    this.nodes.forEach(d => {
+      if(d.reflexive)
+        acc += "<state sid='" + d.id + "'/>\n"
+    })
+    acc += '</acceptingSet>\n';
+    let transitions = '<transitionSet>\n';
+    this.links.forEach((d, i) => {
+      transitions += `<transition tid='${i}'>\n`
+      +   `<from>${d.source.id}</from>\n`
+      +   `<to>${d.target.id}</to>\n`
+      +   `<label>${d.label}</label>\n`
+      + '</transition>\n';
+    })
+    transitions += '</transitionSet>\n';
+
+    return `<block sid='${this.id}' regex='${this.desc}' posX='${this.x}' posY='${this.y}'>\n` + states + transitions + acc + initialState + '</block>\n';
+  }
+  // Returns the maximum index of any node
+  set(xml){
+    // In the recursive case we set the description twice
+    this.desc = $(xml).attr('regex');
+    this.nodes = new Array();
+    this.links = new Array();
+
+    let lastId = 0;
+
+    // Setting simple nodes
+    $(xml).children('stateSet').children('state').each((i, d) => {
+        this.nodes.push(new SimpleNode(parseInt($(d).attr('sid')), 
+                                        $(d).attr('final') === "true" ? true : false,
+                                        parseFloat($(d).attr('posX')),
+                                        parseFloat($(d).attr('posY')),
+                                        $(d).attr('initial') === "true" ? true : false
+                                        )
+                        )
+        lastId = Math.max(lastId, parseInt($(d).attr('sid')));
+    })
+    // Setting blocks recursively
+    $(xml).children('stateSet').children('block').each((i, d) => {
+        const subBlock = new BlockNode( parseInt($(d).attr('sid')),
+                                        false,
+                                        $(d).attr('regex'),
+                                        parseFloat($(d).attr('posX')),
+                                        parseFloat($(d).attr('posY'))
+                                        )
+        lastId = Math.max(lastId, subBlock.id);
+        this.nodes.push(subBlock);
+        let unique = true;
+        BlockNode.blocksList.forEach(d => {
+            if(d.first.desc === subBlock.desc)
+                unique = false;
+        })
+        BlockNode.blocksList.push(new Tuple(subBlock, unique));
+        lastId = Math.max(subBlock.set($(d)), lastId);
+    })
+    // Setting transitions
+    $(xml).children('transitionSet').children('transition').each((i, d) => {
+        const source = this.nodes.find(s => s.id === parseInt($(d).find('from').first().text()));
+        const target = this.nodes.find(s => s.id === parseInt($(d).find('to').first().text()));
+        const link = new Link(source, target, $(d).find('label').first().text().trim(), false, source.id < target.id);
+        link.selftransition = (source === target);
+        this.links.push(link);
+    })
+    // Setting bidirectional
+    this.links.forEach(dx => {
+        this.links.forEach(dy => {
+            if(dx.target === dy.source && dx.source === dy.target && dx !== dy){
+                dx.bidirectional = true;
+                dy.bidirectional = true;
+            }
+        })
+    })
+
+    return lastId;
+  }
   // Dimenstions of the rectangle when in focus
   static maximizedHeight = 430;
   static maximizedWidth = 860;
@@ -34,11 +124,14 @@ class BlockNode extends Node {
   static minimizedWidth = 80;
   static overlayHeight = 75;
   static overlayWidth = 115;
+  // Blocks list
+  static blocksList = new Array();
 }
   
 class SimpleNode extends Node {
-  constructor(id, reflexive, x, y){
+  constructor(id, reflexive, x, y, initial){
       super(id, reflexive, x, y);
+      this.initial = initial;
   }
 
   static radius = 18;
@@ -65,8 +158,4 @@ class Tuple {
     this.second = second;
   }
 }
-  
-   /****************************
-    * Setting up classes
-    */
   
