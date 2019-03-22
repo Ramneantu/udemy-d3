@@ -1,3 +1,23 @@
+#automata_tutor {
+  position: relative;
+  width: 755px; /*755px*/
+}
+
+#automata_tutor #workarea {
+  width: 750px; /*750px*/
+  background-color: #A0A0A0;
+  border: 3px solid #808080;
+  /*overflow: auto;*/
+}
+
+#automata_tutor #svgcanvasblock {
+  background-color: #FFFFFF;
+  width: 750px;
+  height: 540px;
+  top: 5px;
+  left: 5px;
+}
+
 svg {
   background-color: #FFF;
   cursor: default;
@@ -28,7 +48,7 @@ path.entry{
 path.wide {
   fill: none;
   stroke: rgb(255, 238, 0);
-  stroke-opacity: 0.5;
+  stroke-opacity: 0;
   stroke-width: 10px;
   cursor: pointer;
 }
@@ -43,6 +63,7 @@ path.link.selected {
 
 path.link.dragline {
   pointer-events: none;
+  stroke-dasharray: 10,2;
 }
 
 path.link.hidden {
@@ -51,6 +72,12 @@ path.link.hidden {
 
 circle.node {
   stroke-width: 1.5px;
+  cursor: pointer;
+}
+
+circle.mouseTarget {
+  fill-opacity: 0;
+  fill: yellow;
   cursor: pointer;
 }
 
@@ -70,11 +97,77 @@ rect.block.reflexive {
 }
 
 text {
-  font: 12px sans-serif;
+  font-family: sans-serif;
+  font-size: 12px;
   pointer-events: none;
 }
 
 text.id {
   text-anchor: middle;
   font-weight: bold;
+}
+
+text.target {
+  text-anchor: middle;
+  font-size: 14px;
+}
+
+text.target.emphasized {
+  font-size: 18px;
+  font-weight: bold;
+  text-anchor: middle;
+}
+
+text.stacktrace{
+  font-size: 18px;
+  text-anchor: start;
+}
+
+text.dots {
+  font-size: 30px;
+  text-anchor: start;
+  font-weight: bold;
+}
+
+circle.halo{
+  fill-opacity: 0.5;
+  fill: #dddddd
+}
+
+.boxbutton > rect {
+  fill: #e3e3e5;
+  cursor: pointer;
+  stroke: #2f3033;
+}
+
+.boxbutton > text {
+  font-size: 14px;
+  text-anchor: middle;
+}
+
+.header > text.desc {
+  font-size: 22px;
+  font-weight: bold;
+  text-anchor: middle;
+}
+
+rect.toolbarFrame {
+  fill: #f2f2f2;
+  stroke: #262626;
+  stroke-width: 2.5px;
+}
+
+.reuseBox > text {
+  font-size: 16px;
+  text-anchor: middle;
+}
+
+.reuseBox > rect {
+  stroke: #2f3033;
+  fill: rgb(247, 228, 17);
+  cursor: context-menu;
+}
+
+.locked * {
+  pointer-events: none;
 }

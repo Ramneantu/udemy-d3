@@ -2,13 +2,12 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     // set up SVG for D3
     const width  = dimensions[0];
     const height = dimensions[1];
-    BlockNode.maximizedWidth = width * .95;
-    BlockNode.maximizedHeight = height * .92;
+    BlockNodeStatic.maximizedWidth = width * .95;
+    BlockNodeStatic.maximizedHeight = height * .92;
     // Colors
     const lightblue = d3.rgb(66, 139, 255);
     const lightgreen = d3.rgb(152, 224, 116);
     const yellow = d3.rgb(247, 228, 17);
-    const colors = d3.scaleOrdinal(d3.schemeCategory10);
 
     const svg = d3.select(container)
         .append('svg')
@@ -35,10 +34,10 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         // .force('y', d3.forceY(height / 2))
         .on('tick', tick.bind(this, 0, 0, width, height));
     const root = new BlockNode(0, false, 'entire regex', 0, 0, nodes, links, force);
-    
+
     // These 2 arrays reference the same object
     const blocksArr = new Array();
-    BlockNode.blocksList = blocksArr;
+    BlockNodeStatic.blocksList = blocksArr;
 
     // Context in which we are operating (in which regex box are we)
     //  We store it as an array and use it like a Stack, always pushing the new
@@ -193,20 +192,18 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         const normX = deltaX / dist;
         const normY = deltaY / dist;
-        const sourcePadding = SimpleNode.radius;
-        // const sourcePadding = link.left ? SimpleNode.radius * 1.25 : SimpleNode.radius;
-        // const targetPadding = link.right ? SimpleNode.radius * 1.25 : SimpleNode.radius;
-        const targetPadding = SimpleNode.radius * 1.15;
+        const sourcePadding = SimpleNodeStatic.radius;
+        // const sourcePadding = link.left ? SimpleNodeStatic.radius * 1.25 : SimpleNodeStatic.radius;
+        // const targetPadding = link.right ? SimpleNodeStatic.radius * 1.25 : SimpleNodeStatic.radius;
+        const targetPadding = SimpleNodeStatic.radius * 1.15;
         let sourceX = link.source.x + (sourcePadding * normX);
         let sourceY = link.source.y + (sourcePadding * normY);
         let targetX = link.target.x - (targetPadding * normX);
         let targetY = link.target.y - (targetPadding * normY);
 
-        // Target is block
-        let blockPadding = 4;
         if(link.target.isBlock){// && link.right){
-            const proportionX = (Math.abs(deltaX) - BlockNode.minimizedWidth/1.84) / Math.abs(deltaX);
-            const proportionY = (Math.abs(deltaY) - BlockNode.minimizedHeight/1.76) / Math.abs(deltaY);
+            const proportionX = (Math.abs(deltaX) - BlockNodeStatic.minimizedWidth/1.84) / Math.abs(deltaX);
+            const proportionY = (Math.abs(deltaY) - BlockNodeStatic.minimizedHeight/1.76) / Math.abs(deltaY);
             let offX = 0;
             let offY = 0;
             if(link.bidirectional){
@@ -220,17 +217,17 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             if(link.bidirectional){
                 const targetXDiff = Math.abs(targetX - link.target.x)*0.90;
                 const targetYDiff = Math.abs(targetY - link.target.y)*0.85;
-                if(targetXDiff > BlockNode.minimizedWidth/2)
-                    targetX = link.target.x + (offX > 0 ? 1 : -1)*BlockNode.minimizedWidth/2;
-                if(targetYDiff > BlockNode.minimizedHeight/2)
-                    targetY = link.target.y + (offY > 0 ? 1 : -1)*BlockNode.minimizedHeight/2;
-            }    
+                if(targetXDiff > BlockNodeStatic.minimizedWidth/2)
+                    targetX = link.target.x + (offX > 0 ? 1 : -1)*BlockNodeStatic.minimizedWidth/2;
+                if(targetYDiff > BlockNodeStatic.minimizedHeight/2)
+                    targetY = link.target.y + (offY > 0 ? 1 : -1)*BlockNodeStatic.minimizedHeight/2;
+            }
         }
         if(link.source.isBlock){// && link.left){
             deltaX = -deltaX;
             deltaY = -deltaY;
-            const proportionX = (Math.abs(deltaX) - BlockNode.minimizedWidth/2) / Math.abs(deltaX);
-            const proportionY = (Math.abs(deltaY) - BlockNode.minimizedHeight/2) / Math.abs(deltaY);
+            const proportionX = (Math.abs(deltaX) - BlockNodeStatic.minimizedWidth/2) / Math.abs(deltaX);
+            const proportionY = (Math.abs(deltaY) - BlockNodeStatic.minimizedHeight/2) / Math.abs(deltaY);
 
             blockPadding = 0;
 
@@ -247,10 +244,10 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             if(link.bidirectional){
                 const sourceXDiff = Math.abs(sourceX - link.source.x)*0.95;
                 const sourceYDiff = Math.abs(sourceY - link.source.y)*0.95;
-                if(sourceXDiff > BlockNode.minimizedWidth/2)
-                    sourceX = link.source.x + (offX > 0 ? 1 : -1)*BlockNode.minimizedWidth/2;//Math.max(proportionX, proportionY)*deltaX + link.target.x
-                if(sourceYDiff > BlockNode.minimizedHeight/2)
-                    sourceY = link.source.y + (offY > 0 ? 1 : -1)*BlockNode.minimizedHeight/2;//Math.max(proportionX, proportionY)*deltaY + link.target.y
+                if(sourceXDiff > BlockNodeStatic.minimizedWidth/2)
+                    sourceX = link.source.x + (offX > 0 ? 1 : -1)*BlockNodeStatic.minimizedWidth/2;//Math.max(proportionX, proportionY)*deltaX + link.target.x
+                if(sourceYDiff > BlockNodeStatic.minimizedHeight/2)
+                    sourceY = link.source.y + (offY > 0 ? 1 : -1)*BlockNodeStatic.minimizedHeight/2;//Math.max(proportionX, proportionY)*deltaY + link.target.y
             }
         }
 
@@ -293,16 +290,16 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     function tick(offsetX, offsetY, width, height) {
         // draw directed edges with proper padding from node centers
         circle.attr('transform', (d) => {
-            d.x = Math.max(SimpleNode.radius + offsetX, Math.min(offsetX + width - SimpleNode.radius, d.x));
-            d.y = Math.max(SimpleNode.radius + offsetY, Math.min(offsetY + height - SimpleNode.radius, d.y));
+            d.x = Math.max(SimpleNodeStatic.radius + offsetX, Math.min(offsetX + width - SimpleNodeStatic.radius, d.x));
+            d.y = Math.max(SimpleNodeStatic.radius + offsetY, Math.min(offsetY + height - SimpleNodeStatic.radius, d.y));
             return `translate(${d.x}, ${d.y})`;
         });
 
         rect.attr('transform', (d) => {
-            d.x = Math.max(BlockNode.minimizedWidth/2 + offsetX, Math.min(offsetX + width - BlockNode.minimizedWidth/2, d.x));
-            d.y = Math.max(BlockNode.minimizedHeight/2 + offsetY, Math.min(offsetY + height - BlockNode.minimizedHeight/2, d.y));
-            return `translate(${d.x - BlockNode.minimizedWidth/2},${d.y - BlockNode.minimizedHeight/2})`;});
-        
+            d.x = Math.max(BlockNodeStatic.minimizedWidth/2 + offsetX, Math.min(offsetX + width - BlockNodeStatic.minimizedWidth/2, d.x));
+            d.y = Math.max(BlockNodeStatic.minimizedHeight/2 + offsetY, Math.min(offsetY + height - BlockNodeStatic.minimizedHeight/2, d.y));
+            return `translate(${d.x - BlockNodeStatic.minimizedWidth/2},${d.y - BlockNodeStatic.minimizedHeight/2})`;});
+
         path.selectAll('path').attr('d', (d) => drawEdge(d));
         path.selectAll('.labelGroup')
             .attr('transform', (d) => {
@@ -326,7 +323,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         path.selectAll('.link').classed('selected', (d) => d === selectedLink)
             .style('marker-end', 'url(#end-arrow)');
         // In case we changed label
-        
+
         // remove old links
         path.exit().remove();
 
@@ -334,7 +331,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             .append('g')
             .classed('pathGroup', true)
         // add new links
-        
+
         pg.append('g')
             .classed('lineGroup', true)
             .on('mousedown', (d) => {
@@ -347,10 +344,10 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 restart();
             })
             .on('contextmenu', d3.contextMenu(menuLink))//deterministic ? null : d3.contextMenu(menuLink))
-                .append('svg:path')
-                .attr('class', 'link')
-                .classed('selected', (d) => d === selectedLink)
-                .style('marker-end', 'url(#end-arrow)');
+            .append('svg:path')
+            .attr('class', 'link')
+            .classed('selected', (d) => d === selectedLink)
+            .style('marker-end', 'url(#end-arrow)');
 
         pg.selectAll('.lineGroup')
             .append('path')
@@ -358,15 +355,15 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
         pg.append('g')
             .classed('labelGroup', true);
-        
+
         path = pg.merge(path);
 
         const lg = path
             .selectAll('.labelGroup')
             .selectAll('.edgeLetter')
-            .data(link => link.label.split(' ').filter(c => c.length > 0).map((c, i) => new Tuple(new Link(link.source, link.target, c, link.bidirectional, link.up), i - link.label.length/4)), 
+            .data(link => link.label.split(' ').filter(c => c.length > 0).map((c, i) => new Tuple(new Link(link.source, link.target, c, link.bidirectional, link.up), i - link.label.length/4)),
                 d => '' + d.first.source.id + d.first.target.id + d.first.label + d.second)
-        
+
         lg.exit().remove();
 
         let sg = lg.enter()
@@ -376,13 +373,11 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             .style('cursor', 'pointer')
             .on('mouseover', function(d){
                 d3.select(this).select('text')
-                    .style('font-weight', 'bold')
-                    .style('font-size', 16)
+                    .classed('emphasized', true)
             })
             .on('mouseleave', function(d){
                 d3.select(this).select('text')
-                    .style('font-weight', 'normal')
-                    .style('font-size', 14)
+                    .classed('emphasized', false)
             })
             .on('contextmenu', d3.contextMenu(menuLinkLetter))//deterministic ? null : d3.contextMenu(menuLinkLetter))
             .on('mousedown', function(d){
@@ -394,27 +389,29 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 mousedownLetter = d.first.label;
                 selectedLink = null;
 
+                const elm = document.getElementById(container.substring(1));
+                const offX = elm === null ? 0 : elm.getBoundingClientRect().left;
+                const offY = elm === null ? 0 : elm.getBoundingClientRect().top;
+
                 // reposition drag line
                 dragLine
                     .style('marker-end', 'url(#end-arrow)')
-                    .attr('d', `M${mousedownNode.x},${mousedownNode.y}L${d3.event.pageX},${d3.event.pageY}`);
+                    .attr('d', `M${mousedownNode.x},${mousedownNode.y}L${d3.event.pageX - offX},${d3.event.pageY - offY}`);
                 dragGroup
                     .attr('display', 'block');
 
                 //remove letter from linksArray
                 addLink(d.first.source, d.first.target, d.first.label, removeLetterFromString);
-                
+
                 restart();
             })
         sg.append('text')
-            .attr('text-anchor', 'middle')
-            .style('font-size', 14)
+            .classed('target', true)
             .text(d => d.first.label);
         sg.append('circle')
-            .attr('r', SimpleNode.radius * .5)
-            .style('fill', 'yellow')
-            .style('fill-opacity', 0)
-            .attr('cy', -2)        
+            .attr('r', SimpleNodeStatic.radius * .5)
+            .classed('mouseTarget', true)
+            .attr('cy', -2)
 
         // circle (node) group
         // NB: the function arg is crucial here! nodes are known by id, not by index!
@@ -441,7 +438,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             .append('path')
             .classed('entry', true)
             .style('marker-end', 'url(#end-arrow)')
-            .attr('d', d => `M ${-45},${0} L ${- SimpleNode.radius - 5},${0}`)
+            .attr('d', d => `M ${-45},${0} L ${- SimpleNodeStatic.radius - 5},${0}`)
 
         // Adding halo around the nodes
         // Setting up a new group for each inserted node
@@ -454,23 +451,21 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 })
                 .append('circle')
                 .classed('halo', true)
-                .attr('r', SimpleNode.radius * 2)
-                .style('fill', '#dddddd')
-                .style('fill-opacity', 0.5);
+                .attr('r', SimpleNodeStatic.radius * 2)
 
             alphabet.forEach((d, i) => {
-                addLetterToOverlay(haloGroup, 
-                    Math.cos(Math.PI - (i + 0.5) * Math.PI / alphabet.length) * SimpleNode.radius * 1.5,
-                    -Math.sin((i + 0.5) * Math.PI / alphabet.length) * SimpleNode.radius * 1.5,
+                addLetterToOverlay(haloGroup,
+                    Math.cos(Math.PI - (i + 0.5) * Math.PI / alphabet.length) * SimpleNodeStatic.radius * 1.5,
+                    -Math.sin((i + 0.5) * Math.PI / alphabet.length) * SimpleNodeStatic.radius * 1.5,
                     d);
             });
             // Adds epsilon to halo
             if(epsilon)
-                addLetterToOverlay(haloGroup, 0, SimpleNode.radius * 1.5, '\u03b5')
+                addLetterToOverlay(haloGroup, 0, SimpleNodeStatic.radius * 1.5, '\u03b5')
         }
         g.append('svg:circle')
             .attr('class', 'node')
-            .attr('r', SimpleNode.radius)
+            .attr('r', SimpleNodeStatic.radius)
             .style('fill', (d) => (d === selectedNode) ? lightblue.brighter().toString() : lightblue)
             .style('stroke', (d) => lightblue.darker().toString())
             .classed('reflexive', (d) => d.reflexive)
@@ -523,7 +518,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 // unenlarge target node
                 d3.select(this).attr('transform', '');
                 // Add/update link in currContext link array
-                addLink(mousedownNode, d, mousedownLetter);   
+                addLink(mousedownNode, d, mousedownLetter);
                 restart();
             });
 
@@ -554,33 +549,33 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             const overlayGroup = rg.append('g').classed('overlayGroup', true);
             overlayGroup
                 .attr('display', 'none')
-                .attr('transform', `translate(${-(BlockNode.overlayWidth - BlockNode.minimizedWidth)/2}, ${-(BlockNode.overlayHeight - BlockNode.minimizedHeight)/2})`)
+                .attr('transform', `translate(${-(BlockNodeStatic.overlayWidth - BlockNodeStatic.minimizedWidth)/2}, ${-(BlockNodeStatic.overlayHeight - BlockNodeStatic.minimizedHeight)/2})`)
                 .on('mouseleave', function(d){
                     d3.select(this).attr('display', 'none');
                 })
                 .append('rect')
                 .classed('overlay', true)
-                .attr('height', BlockNode.overlayHeight)
-                .attr('width', BlockNode.overlayWidth)
+                .attr('height', BlockNodeStatic.overlayHeight)
+                .attr('width', BlockNodeStatic.overlayWidth)
                 .style('fill', '#dddddd')
                 .style('fill-opacity', 0.5);
             const slotWidth = 22;
-            const slots = Math.floor(BlockNode.overlayWidth/slotWidth)
-            const startX = (BlockNode.overlayWidth - (Math.min(slots, alphabet.length))*slotWidth)/2;
+            const slots = Math.floor(BlockNodeStatic.overlayWidth/slotWidth)
+            const startX = (BlockNodeStatic.overlayWidth - (Math.min(slots, alphabet.length))*slotWidth)/2;
             alphabet.forEach((d, i) => {
                 if(i < slots)
-                    addLetterToOverlay(overlayGroup, (BlockNode.overlayWidth - BlockNode.minimizedWidth)/4 + startX + i * slotWidth, (BlockNode.overlayHeight - BlockNode.minimizedHeight)/4, d);
+                    addLetterToOverlay(overlayGroup, (BlockNodeStatic.overlayWidth - BlockNodeStatic.minimizedWidth)/4 + startX + i * slotWidth, (BlockNodeStatic.overlayHeight - BlockNodeStatic.minimizedHeight)/4, d);
             });
             // Adds epsilon symbol on overlay
             if(epsilon)
-                addLetterToOverlay(overlayGroup, (BlockNode.overlayWidth)/2, BlockNode.overlayHeight - (BlockNode.overlayHeight - BlockNode.minimizedHeight)/4, '\u03b5');
+                addLetterToOverlay(overlayGroup, (BlockNodeStatic.overlayWidth)/2, BlockNodeStatic.overlayHeight - (BlockNodeStatic.overlayHeight - BlockNodeStatic.minimizedHeight)/4, '\u03b5');
         }
         rg.classed('rectGroup', true)
             .attr('id', (d) => 'id-' + d.id)
             .append('svg:rect')
             .attr('class', 'block')
-            .attr('height', BlockNode.minimizedHeight)
-            .attr('width', BlockNode.minimizedWidth)
+            .attr('height', BlockNodeStatic.minimizedHeight)
+            .attr('width', BlockNodeStatic.minimizedWidth)
             .style('fill', (d) => (d === selectedNode) ? lightgreen.brighter().toString() : lightgreen)
             .style('stroke', (d) => lightgreen.darker().toString())
             .classed('reflexive', (d) => d.reflexive)
@@ -591,7 +586,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 }
                 // enlarge target node
                 d3.select(this)
-                    .attr('transform', `scale(1.1) translate(${-BlockNode.minimizedWidth*.05}, ${-BlockNode.minimizedHeight*.05})`);
+                    .attr('transform', `scale(1.1) translate(${-BlockNodeStatic.minimizedWidth*.05}, ${-BlockNodeStatic.minimizedHeight*.05})`);
             })
             .on('mouseout', function (d) {
                 if (!mousedownNode)// || d === mousedownNode)
@@ -606,7 +601,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 draggingNode = d;
                 rect.call(drag);
                 svg.classed('ctrl', true);
-                
+
                 timer = setTimeout(() => {
                     selectedNode = (d === selectedNode) ? null : d;
                     selectedLink = null;
@@ -637,8 +632,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
         // show block description
         rg.append('svg:text')
-            .attr('x', BlockNode.minimizedWidth / 2)
-            .attr('y', BlockNode.minimizedHeight / 2 + 3)
+            .attr('x', BlockNodeStatic.minimizedWidth / 2)
+            .attr('y', BlockNodeStatic.minimizedHeight / 2 + 3)
             .attr('text-anchor', 'middle')
             .attr('class', 'desc')
             .text((d) => d.desc);
@@ -657,50 +652,43 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
     function addLetterToOverlay(group, x, y, letter){
         const smallCircle = group.append('g')
-                .attr('transform', `translate(${x},${y})`);
-            smallCircle
-                .append('circle')
-                .attr('r', SimpleNode.radius * 0.6)
-                .style('cursor', 'pointer')
-                //testing purposes
-                .style('fill', 'yellow')
-                // transparent
-                .style('fill-opacity', 0)
-                .on('mousedown', (d) => {
-                    if (d3.event.which === 3 || contextOpen || formOpen)
-                            return;
+            .attr('transform', `translate(${x},${y})`);
+        smallCircle
+            .append('circle')
+            .attr('r', SimpleNodeStatic.radius * 0.6)
+            .classed('mouseTarget', true)
+            .on('mousedown', (d) => {
+                if (d3.event.which === 3 || contextOpen || formOpen)
+                    return;
 
-                    // select node
-                    mousedownNode = d;
-                    mousedownLetter = smallCircle.select('text').text();
-                    selectedLink = null;
+                // select node
+                mousedownNode = d;
+                mousedownLetter = smallCircle.select('text').text();
+                selectedLink = null;
 
-                    // reposition drag line
-                    dragLine
-                        .style('marker-end', 'url(#end-arrow)')
-                        .attr('d', `M${mousedownNode.x},${mousedownNode.y}L${mousedownNode.x},${mousedownNode.y}`);
-                    dragGroup
-                        .attr('display', 'block');
+                // reposition drag line
+                dragLine
+                    .style('marker-end', 'url(#end-arrow)')
+                    .attr('d', `M${mousedownNode.x},${mousedownNode.y}L${mousedownNode.x},${mousedownNode.y}`);
+                dragGroup
+                    .attr('display', 'block');
 
-                    restart();
-                })
-                .on('mouseover', (d) => {
-                    smallCircle.select('text')
-                        .style('font-weight', 'bold')
-                        .style('font-size', 16)
-                })
-                .on('mouseleave', (d) => {
-                    smallCircle.select('text')
-                        .style('font-weight', 'normal')
-                        .style('font-size', 14)
-                })
-            // Mouseup propagates until svg and cancels drag line
-            smallCircle
-                .append('text')
-                .attr('text-anchor', 'middle')
-                .attr('y', 5)
-                .text(letter)
-                .style('font-size', 14);
+                restart();
+            })
+            .on('mouseover', (d) => {
+                smallCircle.select('text')
+                    .classed('emphasized', true)
+            })
+            .on('mouseleave', (d) => {
+                smallCircle.select('text')
+                    .classed('emphasized', false)
+            })
+        // Mouseup propagates until svg and cancels drag line
+        smallCircle
+            .append('text')
+            .classed('target', true)
+            .attr('y', 5)
+            .text(letter)
     }
 
     function pushContext(newContext, hierachical = true){
@@ -753,13 +741,13 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             headerGroup = header.enter()
                 .append('g')
                 .classed('header', true)
-                .attr('transform', `translate(${(width - BlockNode.maximizedWidth)/2}, ${(height - BlockNode.maximizedHeight)/2})`);
+                .attr('transform', `translate(${(width - BlockNodeStatic.maximizedWidth)/2}, ${(height - BlockNodeStatic.maximizedHeight)/2})`);
 
             headerGroup
                 .append('rect')
                 .classed('banner', true)
-                .attr('width', BlockNode.maximizedWidth)
-                .attr('height', BlockNode.headerHeight)
+                .attr('width', BlockNodeStatic.maximizedWidth)
+                .attr('height', BlockNodeStatic.headerHeight)
                 .attr('x', 0)
                 .attr('y', 0)
                 .style('stroke', '#2f3033')
@@ -769,21 +757,18 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             // Append Frame
             headerGroup
                 .append('rect')
-                .attr('width', BlockNode.maximizedWidth)
-                .attr('height', BlockNode.maximizedHeight - BlockNode.headerHeight)
+                .attr('width', BlockNodeStatic.maximizedWidth)
+                .attr('height', BlockNodeStatic.maximizedHeight - BlockNodeStatic.headerHeight)
                 .attr('x', 0)
-                .attr('y', BlockNode.headerHeight)
+                .attr('y', BlockNodeStatic.headerHeight)
                 .attr('fill', '#f2f2f2')
                 .style('stroke', '#262626');
             // Header Text
             let compoundWidth =
                 headerGroup.append('text')
                     .classed('desc', true)
-                    .attr('text-anchor', 'middle')
-                    .attr('x', BlockNode.maximizedWidth/2)
-                    .attr('y', BlockNode.headerHeight/2 + 6)
-                    .style('font-size', '22')
-                    .style('font-weight', 'bold')
+                    .attr('x', BlockNodeStatic.maximizedWidth/2)
+                    .attr('y', BlockNodeStatic.headerHeight/2 + 6)
                     .text(d => {
                         return d.desc;})
                     .node()
@@ -791,13 +776,14 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 / 2 + 8;
             // Stack trace
             if(hierachical){
-                for(let i = contextStack.length - 1; i >= Math.max(0, contextStack.length - 3); i--){
+                for(let i = contextStack.length - 1; i >= 0; i--){// Math.max(0, contextStack.length - 3)
                     const inter = 24;
                     const block = contextStack[i];
                     const smallRectGroup = headerGroup.append('g').classed('smallRect', true);
                     smallRectGroup.data([contextStack[i]], (d) => d.id)
                     const slotWidth = smallRectGroup.append('text')
-                            .style('font-size', '18')
+                        // .style('font-size', '18')
+                            .classed('stacktrace', true)
                             .text(block.desc)
                             .node()
                             .getComputedTextLength()
@@ -822,23 +808,22 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                     smallRectGroup.select('text')
                         .attr('x', slotWidth * 0.1)
                         .attr('y', rectHeight / 2 + 6);
-                    smallRectGroup.attr('transform', `translate(${BlockNode.maximizedWidth/2 - compoundWidth - slotWidth - inter},${BlockNode.headerHeight/2 - rectHeight/2})`);
+                    smallRectGroup.attr('transform', `translate(${BlockNodeStatic.maximizedWidth/2 - compoundWidth - slotWidth - inter},${BlockNodeStatic.headerHeight/2 - rectHeight/2})`);
                     compoundWidth += slotWidth + inter;
                     // Calculations so we do not overfill the header with boxes
-                    const whiteSpaceSide = (width - BlockNode.maximizedWidth)/2;
-                    const dotsWidth = i > 1 ? 42 : 0;
+                    const whiteSpaceSide = (width - BlockNodeStatic.maximizedWidth)/2;
+                    const dotsWidth = i > 1 ? 46 : 0;
                     const nextBlockEstimate = i > 0 ? contextStack[i - 1].desc.length * 10 : 0;
                     // Last element, still a couple to go
-                    if(compoundWidth > BlockNode.maximizedWidth/2 - inter - dotsWidth - whiteSpaceSide - nextBlockEstimate && i !== 0){
+                    if(compoundWidth > BlockNodeStatic.maximizedWidth/2 - inter - dotsWidth - whiteSpaceSide - nextBlockEstimate && i !== 0){
                         smallRectGroup.append('path')
                             .attr('d', `M ${-inter} ${rectHeight/2} L ${-4} ${rectHeight/2}`)
                             .style('stroke-width', '4')
                             .style('stroke', 'black')
                             .style('marker-end', 'url(#end-arrow)')
                         smallRectGroup.append('text')
-                            .style('font-size', '24')
-                            .style('font-weight', 'bold')
-                            .attr('x', -inter-42)
+                            .classed('dots', true)
+                            .attr('x', -inter-46)
                             .attr('y', rectHeight / 2 + 12)
                             .text('. . .')
                         break;
@@ -851,41 +836,33 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             const rightPadding = 25;
             const inter = 20;
             headerGroup.append('g')
-                .classed('returnGroup', true)
-                .attr('transform', `translate(${BlockNode.maximizedWidth - buttonWidth/2 - rightPadding}, ${BlockNode.headerHeight/2})`);
+                .attr('class', 'returnGroup boxbutton')
+                .attr('transform', `translate(${BlockNodeStatic.maximizedWidth - buttonWidth/2 - rightPadding}, ${BlockNodeStatic.headerHeight/2})`);
             const returnGroup = headerGroup.selectAll('.returnGroup');
             returnGroup.append('rect')
                 .attr('width', buttonWidth)
                 .attr('height', buttonHeight)
                 .attr('x', -buttonWidth/2)
                 .attr('y',  -buttonHeight/2)
-                .attr('fill', '#e3e3e5')
-                .style('stroke', '#2f3033')
-                .style('cursor', 'pointer')
                 .on('mousedown', () => {
                     d3.event.stopPropagation();
                     popContext();
                 });
             returnGroup.append('text')
-                .attr('text-anchor', 'middle')
                 .attr('x', 0)
                 .attr('y', 5)
-                .style("font-size", "14")
                 .text('Return');
 
             // Home Button
             headerGroup.append('g')
-                .classed('homeGroup', true)
-                .attr('transform', `translate(${BlockNode.maximizedWidth - buttonWidth*3/2 - rightPadding - inter}, ${BlockNode.headerHeight/2})`);
+                .attr('class', 'homeGroup boxbutton')
+                .attr('transform', `translate(${BlockNodeStatic.maximizedWidth - buttonWidth*3/2 - rightPadding - inter}, ${BlockNodeStatic.headerHeight/2})`);
             const homeGroup = headerGroup.selectAll('.homeGroup');
             homeGroup.append('rect')
                 .attr('width', buttonWidth)
                 .attr('height', buttonHeight)
                 .attr('x', -buttonWidth/2)
                 .attr('y',  -buttonHeight/2)
-                .attr('fill', '#e3e3e5')
-                .style('stroke', '#2f3033')
-                .style('cursor', 'pointer')
                 .on('mousedown', () => {
                     d3.event.stopPropagation();
                     while(contextStack.length > 1){
@@ -895,10 +872,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                     popContext();
                 });
             homeGroup.append('text')
-                .attr('text-anchor', 'middle')
                 .attr('x', 0)
                 .attr('y', 5)
-                .style("font-size", "14")
                 .text('Home');
         }
 
@@ -910,9 +885,9 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .force('charge', d3.forceManyBody().strength(-500).distanceMax(100))
                 // .force('x', d3.forceX(width / 2))
                 // .force('y', d3.forceY(height / 2))
-                .on('tick', tick.bind(this, (width - BlockNode.maximizedWidth)/2, (height - BlockNode.maximizedHeight)/2 + BlockNode.headerHeight, BlockNode.maximizedWidth, BlockNode.maximizedHeight - BlockNode.headerHeight));
+                .on('tick', tick.bind(this, (width - BlockNodeStatic.maximizedWidth)/2, (height - BlockNodeStatic.maximizedHeight)/2 + BlockNodeStatic.headerHeight, BlockNodeStatic.maximizedWidth, BlockNodeStatic.maximizedHeight - BlockNodeStatic.headerHeight));
         }
-        
+
         // Don't render toolbar for simple automata
         if(blocksArr.length > 0 && blockAutomaton)
             toolbar.render();
@@ -974,11 +949,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     // Called on mouseup
     // Also modifies existing links and removes links if label is empty
     function addLink(source, target, label, act = addLetterToString){
-        // check for drag-to-self
-        // mouseupNode = d;
-        // const source = mousedownNode;
-        // const target = mouseupNode;
-        // const label = mousedownLetter;
 
         const link = currentContext.links.filter((l) => l.source === source && l.target === target)[0];
         const reverseLink = currentContext.links.filter((l) => l.source === target && l.target === source)[0];
@@ -1005,7 +975,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         // console.log(modifiedLink.label)
         if(modifiedLink.label === '')
             syncRemoveLink(modifiedLink);
-        else    
+        else
             syncLink(modifiedLink);
         // select link if it already existed
         // selectedLink = link;
@@ -1092,6 +1062,29 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         restart();
     }
 
+    // descAttempt: name of node we wish to add
+    // descFather: name of node
+    function validBlockHelper(block, stack, descAttempt, descFather){
+        stack.push(block.desc);
+        if(block.desc === descFather && stack.includes(descAttempt)){
+            stack.pop();
+            return 0;
+        }
+
+        let ret = 1;
+        block.nodes.filter(d => d.isBlock).forEach(neigh => {
+            ret &= validBlockHelper(neigh, stack, descAttempt, descFather);
+        });
+        stack.pop();
+        return ret;
+    }
+
+    // Trying to add a block with label 'desc' in currentContext
+    function validBlock(desc){
+        // Checking all stack traces
+        return validBlockHelper(root, [], desc, currentContext.desc);
+    }
+
     function buildBlock(desc, x = blockInsertCoordinates[0], y = blockInsertCoordinates[1]){
         // Looking for node
         let twin = null;
@@ -1134,7 +1127,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     function closeForm(){
         // Invalid description
         const desc = $('#desc').val();
-        if(desc === currentContext.desc || descInStack(desc) || desc.length === 0){
+        if(desc === currentContext.desc || !validBlock(desc) || desc.length === 0){
             $('#desc')
                 .css('background', 'rgba(255,0,0,0.7)')
                 .blur()
@@ -1152,15 +1145,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         toolbar.render();
         syncNode(nodeTuple.first);
         restart();
-    }
-
-    function descInStack(desc){
-        let ret = false;
-        contextStack.forEach(d => {
-            if(d.desc === desc)
-                ret = true;
-        })
-        return ret;
     }
 
     let blockInsertCoordinates;
@@ -1213,10 +1197,10 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         svg
             .append('svg:rect')
             .classed('form-rect', true)
-            .attr('height', BlockNode.minimizedHeight)
-            .attr('width', BlockNode.minimizedWidth)
-            .attr('x', blockInsertCoordinates[0] - BlockNode.minimizedWidth/6)
-            .attr('y', blockInsertCoordinates[1] - BlockNode.minimizedHeight/4)
+            .attr('height', BlockNodeStatic.minimizedHeight)
+            .attr('width', BlockNodeStatic.minimizedWidth)
+            .attr('x', blockInsertCoordinates[0] - BlockNodeStatic.minimizedWidth/6)
+            .attr('y', blockInsertCoordinates[1] - BlockNodeStatic.minimizedHeight/4)
             .style('fill', lightgreen)
             .style('stroke', lightgreen.darker().toString())
     }
@@ -1258,7 +1242,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         for (const l of toSplice)
             syncRemoveLink(l, deterministic && (l.target !== l.source) && l.target === node);
         selectedNode = sel;
-        
+
         // if(deterministic){
         //     //Add removed links again
         //     const sel = selectedNode;
@@ -1276,7 +1260,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             currentContext.nodes.splice(currentContext.nodes.indexOf(selectedNode), 1);
         } else if (selectedLink) {
             // Allows deletion on nondet always
-            // Deletion on det only if source different from target 
+            // Deletion on det only if source different from target
             if(!deterministic || selectedLink.target !== selectedLink.source)
                 syncRemoveLink(selectedLink, deterministic);
         }
@@ -1329,9 +1313,9 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             .attr('width', width)
             .attr('height', toolbarHeight)
             .attr('y', height);
-        
+
         this.add = function(d){
-            if(d.desc !== currentContext.desc && !descInStack(d.desc)){
+            if(d.desc !== currentContext.desc && validBlock(d.desc)){
                 const nodeTuple = buildBlock(d.desc, width / 2, height * 0.75);
                 currentContext.nodes.push(nodeTuple.first);
                 blocksArr.push(nodeTuple);
@@ -1344,7 +1328,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             let scrollPosition = 0;
             let maxScroll = 100000000;
             let minScroll = 0;
-            
+
             this.svg.selectAll('.toolbarGroup').remove();
 
             let group = this.svg
@@ -1365,27 +1349,21 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                     }
                 });
 
-            group.selectAll('.toolbarFrame')
-                .data([1]).enter()
+            group
                 .append('rect')
                 .classed('toolbarFrame', true)
-                .attr('width', BlockNode.maximizedWidth)
-                .attr('x', (width - BlockNode.maximizedWidth) / 2)
+                .attr('width', BlockNodeStatic.maximizedWidth)
+                .attr('x', (width - BlockNodeStatic.maximizedWidth) / 2)
                 .attr('height', toolbarHeight)
-                .attr('fill', '#f2f2f2')
-                .style('stroke', '#262626')
-                .style('stroke-width', '2.5px');
-                
+
             const offsetY = 10;
             const interX = 10;
-            let offsetX = (width - BlockNode.maximizedWidth) / 2 + 15;
+            let offsetX = (width - BlockNodeStatic.maximizedWidth) / 2 + 15;
             const buttonPaddingSide = 5;
-            
+
             group
-                .selectAll('.allBoxesGroup')
-                .data([1]).enter()
                 .append('g')
-                    .classed('allBoxesGroup', true);
+                .classed('allBoxesGroup', true);
             const allBoxesGroup = group.select('.allBoxesGroup');
             allBoxesGroup.selectAll('.reuseBox').remove();
 
@@ -1402,29 +1380,22 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
             const rectHeight = 28;
             g.append('text')
-                    .style('font-size', '16')
-                    .text(d => d.desc)
-                    .node();
+                .text(d => d.desc);
 
             g.insert('rect', 'text')
                 .attr('width', function(){return d3.select(this.parentNode).select('text').node().getComputedTextLength() + 2 * buttonPaddingSide;})
                 .attr('height', rectHeight)
-                //color
-                .style('fill', yellow)
-                .style('stroke', '#2f3033')
-                .style('cursor', 'context-menu')
                 .on('dblclick', d => pushContext(d, false))
                 .on('contextmenu', d3.contextMenu(menuToolboxBlock))
             g.select('text')
-                .attr('text-anchor', 'middle')
                 .attr('x', function(){return (d3.select(this.parentNode).select('text').node().getComputedTextLength() + 2 * buttonPaddingSide) / 2;})
                 .attr('y', rectHeight / 2 + 6);
             g.attr('transform', function(d, i){
                 const slotWidth = d3.select(this).select('text').node().getComputedTextLength() + 2 * buttonPaddingSide;
                 const str = `translate(${offsetX},${offsetY})`;
                 offsetX += slotWidth + interX;
-                maxScroll = Math.max(0, Math.min(maxScroll, BlockNode.maximizedWidth - offsetX));
-                minScroll = Math.max(0, Math.max(minScroll, offsetX - BlockNode.maximizedWidth));
+                maxScroll = Math.max(0, Math.min(maxScroll, BlockNodeStatic.maximizedWidth - offsetX));
+                minScroll = Math.max(0, Math.max(minScroll, offsetX - BlockNodeStatic.maximizedWidth));
                 return str;
             });
         }
@@ -1513,7 +1484,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             // If deterministic, add back to source
             addLink(d.first.source, d.first.target, d.first.label, removeLetterFromString);
             if(deterministic)
-                addLink(d.first.source, d.first.source, d.first.label);    
+                addLink(d.first.source, d.first.source, d.first.label);
             restart();
         }
     }]
@@ -1523,7 +1494,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     /**********************
      * app starts here
      */
-    // We only need a toolbar for a block automaton
+        // We only need a toolbar for a block automaton
     let toolbar = null;
     if(blockAutomaton)
         toolbar = new Toolbar();
@@ -1547,25 +1518,37 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         .on('keyup', keyup);
     restart();
 
-    // Alphabet should be set in the beginning
-    // Calling this function RESETS the WHOLE AUTOMATON
-    this.setAlphabet = function(alpha){
-        // alpha is a string
+    this.reset = function(){
         this.clear();
-        
-        alphabet = alpha.split(' ');
+
         const initial = new SimpleNode(++lastNodeId, false, width/6, height/2, true);
         root.nodes.push(initial);
-        // Add transition for each 
+        // Add transition for each
         replaceContext(root);
         if(deterministic)
             alphabet.forEach(c => addLink(initial, initial, c));
-        
+
         circle.remove();
         rect.remove();
         path.remove();
 
         restart();
+    }
+    // Alphabet should be set in the beginning
+    // Calling this function RESETS the WHOLE AUTOMATON
+    this.setAlphabet = function(alpha){
+        // alpha is a string
+        alphabet = alpha.split(' ').filter(d => d.length > 0);
+        this.reset();
+    }
+    this.setAlphabetArray = function(alpha){
+        this.setAlphabet(alpha.join(' '));
+    }
+    this.setEpsilon = function(flag){
+        if(deterministic)
+            return;
+        epsilon = flag;
+        this.reset();
     }
 
     this.exportAlphabet = function(){
@@ -1584,7 +1567,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         const alpha = this.exportAlphabet();
         const isBlockAutomaton = `<automatonType>${blockAutomaton}</automatonType>\n`;
         const isDeterministic = `<deterministic>${deterministic}</deterministic>\n`
-        const epsilonTrasitions = `<epsilonTransitions>${epsilon}</epsilonTransitions>\n`;
+        const epsilonTrasitions = `<epsilon>${epsilon}</epsilon>\n`;
         const automaton = root.export();
         return `<automaton>\n ${isBlockAutomaton} ${isDeterministic} ${epsilonTrasitions} ${alpha} ${automaton} </automaton>`;
     }
@@ -1613,13 +1596,13 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
     /******************************************** */
 
+    // Clears everything but the alphabet
     this.clear = function(){
         force.stop();
         // Arrays
         blocksArr.length = 0;
         contextStack.length = 0;
         showStackTrace.length = 0;
-        alphabet.length = 0;
         root.nodes.length = 0;
         root.links.length = 0;
         // Vars
@@ -1629,22 +1612,27 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         resetMouseVars();
     }
 
+    this.lockCanvas = function(){
+        d3.select(container).classed('locked', true);
+    }
+
     this.setAutomaton = function(automaton){
         const xmlAut = $.parseXML(automaton);
         this.clear();
         // Getting alphabet
+        alphabet.length = 0;
         $(xmlAut).find('alphabet').children().each(function(i, d){
             alphabet.push($(d).text());
         });
         // Setting configuration variables
         blockAutomaton = $(xmlAut).find('automatonType').text() === 'true' ? true : false;
-        epsilon = $(xmlAut).find('epsilonTransitions').text() === 'true' ? true : false;
+        epsilon = $(xmlAut).find('epsilon').text() === 'true' ? true : false;
         deterministic = $(xmlAut).find('deterministic').text() === 'true' ? true : false;
         menuEmptyArea = blockAutomaton ? menuEmptyAreaBlock : menuEmptyAreaClassic;
         svg.on('contextmenu', d3.contextMenu(menuEmptyArea, deselectAll));
         if(blockAutomaton && !toolbar)
             toolbar = new Toolbar();
-            
+
         lastNodeId = root.set($(xmlAut).find('block').first());
         replaceContext(root);
         restart();
@@ -1655,7 +1643,7 @@ let canvas = new BlockCanvas('body', [960, 540], false, true, true);
 
 // canvas.setAutomaton(`<automaton>
 // <automatonType>true</automatonType>
-// <epsilonTransitions>true</epsilonTransitions>
+// <epsilon>true</epsilon>
 //     <alphabet>
 // <symbol>a</symbol>
 // <symbol>b</symbol>
