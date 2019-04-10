@@ -158,7 +158,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         let dx = Math.sqrt((distSquared * relative * relative + absolute * absolute) / ((m*m + 1)));
 
         let orient = (up ? 1 : -1);
-        let supportX, supportY;
         if(locked){
             // Label always on the same side of the arrow
             if(p1.x > p2.x && up || p1.x <= p2.x && !up)
@@ -174,6 +173,34 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
         return {'x':supportX, 'y':supportY, 'm':m};
     }
+
+    // function perpendicularBisector(p1, p2, up, relative, absolute = 0, locked = true) {
+
+    //     const distSquared = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
+    //     const midpointX = (p1.x + p2.x) / 2;
+    //     const midpointY = (p1.y + p2.y) / 2;
+    //     let denominator = (p2.y - p1.y);
+    //     if(denominator === 0)
+    //         denominator = .001
+    //     const m = -(p2.x - p1.x) / denominator;
+    //     const intercept = midpointY - m * midpointX;
+    //     let dx = Math.sqrt((distSquared * relative * relative + absolute * absolute) / ((m*m + 1)));
+
+    //     let supportX, supportY;
+    //     if(locked){
+    //         // Label always on the same side of the arrow
+    //         const orient = p1.x > p2.x ? 1 : -1;
+    //         supportX = midpointX + (orient * m > 0 ? -dx : dx);
+    //         supportY = (supportX * m + intercept);
+    //     }
+    //     else{
+    //         // Label always on top
+    //         supportX = midpointX + (m > 0 ? -dx : dx);
+    //         supportY = (supportX * m + intercept);
+    //     }
+
+    //     return {'x':supportX, 'y':supportY, 'm':m};
+    // }
 
     function placeLabel(link){
         const lineData = getLinePoints(link);
