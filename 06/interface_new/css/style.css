@@ -145,10 +145,22 @@ circle.halo{
   text-anchor: middle;
 }
 
-.header > text.desc {
+.bannerGroup > text.desc {
   font-size: 22px;
   font-weight: bold;
   text-anchor: middle;
+}
+
+.clearGroup > rect {
+  fill: #c96464;
+  cursor: pointer;
+  stroke: #2f3033;
+}
+
+.clearGroup > text {
+  text-anchor: middle;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 rect.toolbarFrame {

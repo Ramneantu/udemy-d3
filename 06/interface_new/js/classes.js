@@ -137,15 +137,14 @@ const SimpleNodeStatic = {
 }
 
 class Link {
-  constructor(source, target, label = '', bidirectional = false, up = true){
+  constructor(source, target, label = '', bidirectional = false, selftransition = false){
       // Source and target attributes are required by the simulation
       this.source = source;
       this.target = target;
       this.left = false;
       this.right = true;
       this.bidirectional = bidirectional;
-      this.selftransition = false;
-      this.up = up;
+      this.selftransition = selftransition;
       // Letter
       this.label = label;
   }

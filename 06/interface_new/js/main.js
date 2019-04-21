@@ -145,34 +145,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
     // Params: relative - distance from midpoint seen as a fraction of the distance btw points
     //         absolute - absolute distance from midpoint
-    function perpendicularBisector(p1, p2, up, relative, absolute = 0, locked = true) {
-
-        const distSquared = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
-        const midpointX = (p1.x + p2.x) / 2;
-        const midpointY = (p1.y + p2.y) / 2;
-        let denominator = (p2.y - p1.y);
-        if(denominator === 0)
-            denominator = .001
-        const m = -(p2.x - p1.x) / denominator;
-        const intercept = midpointY - m * midpointX;
-        let dx = Math.sqrt((distSquared * relative * relative + absolute * absolute) / ((m*m + 1)));
-
-        let orient = (up ? 1 : -1);
-        if(locked){
-            // Label always on the same side of the arrow
-            if(p1.x > p2.x && up || p1.x <= p2.x && !up)
-                orient = -orient;
-            supportX = midpointX + (orient * m > 0 ? dx : -dx);
-            supportY = (supportX * m + intercept);
-        }
-        else{
-            // Label always on top
-            supportX = midpointX + (orient > 0 ? dx : -dx);
-            supportY = (supportX * m + intercept);
-        }
-
-        return {'x':supportX, 'y':supportY, 'm':m};
-    }
 
     // function perpendicularBisector(p1, p2, up, relative, absolute = 0, locked = true) {
 
@@ -186,21 +158,50 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     //     const intercept = midpointY - m * midpointX;
     //     let dx = Math.sqrt((distSquared * relative * relative + absolute * absolute) / ((m*m + 1)));
 
-    //     let supportX, supportY;
+    //     let orient = (up ? 1 : -1);
     //     if(locked){
     //         // Label always on the same side of the arrow
-    //         const orient = p1.x > p2.x ? 1 : -1;
-    //         supportX = midpointX + (orient * m > 0 ? -dx : dx);
+    //         if(p1.x > p2.x && up || p1.x <= p2.x && !up)
+    //             orient = -orient;
+    //         supportX = midpointX + (orient * m > 0 ? dx : -dx);
     //         supportY = (supportX * m + intercept);
     //     }
     //     else{
     //         // Label always on top
-    //         supportX = midpointX + (m > 0 ? -dx : dx);
+    //         supportX = midpointX + (orient > 0 ? dx : -dx);
     //         supportY = (supportX * m + intercept);
     //     }
 
     //     return {'x':supportX, 'y':supportY, 'm':m};
     // }
+
+    function perpendicularBisector(p1, p2, relative, absolute = 0, locked = true) {
+
+        const distSquared = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
+        const midpointX = (p1.x + p2.x) / 2;
+        const midpointY = (p1.y + p2.y) / 2;
+        let denominator = (p2.y - p1.y);
+        if(denominator === 0)
+            denominator = .001
+        const m = -(p2.x - p1.x) / denominator;
+        const intercept = midpointY - m * midpointX;
+        let dx = Math.sqrt((distSquared * relative * relative + absolute * absolute) / ((m*m + 1)));
+
+        let supportX, supportY;
+        if(locked){
+            // Label always on the same side of the arrow
+            const orient = p1.x > p2.x ? 1 : -1;
+            supportX = midpointX + (orient * m > 0 ? -dx : dx);
+            supportY = (supportX * m + intercept);
+        }
+        else{
+            // Label always on top
+            supportX = midpointX + (m > 0 ? -dx : dx);
+            supportY = (supportX * m + intercept);
+        }
+
+        return {'x':supportX, 'y':supportY, 'm':m};
+    }
 
     function placeLabel(link){
         const lineData = getLinePoints(link);
@@ -208,8 +209,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         if(link.selftransition)
             return {'x':link.source.x, 'y':link.target.y - 80, 'm':0};
         if(link.bidirectional)
-            return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, link.up, 1/3, 15);
-        return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, slope > 0 ? true : false, 0, 8, false);
+            return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, 1/3, 15);
+        return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, 0, 8, false);
     }
 
     function getLinePoints(link){
@@ -295,7 +296,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 'slope': 0};
         }
         if(link.bidirectional)
-            support = perpendicularBisector({ "x": sourceX,   "y": sourceY},  { "x": targetX,  "y": targetY}, link.up, 1/3);
+            support = perpendicularBisector({ "x": sourceX,   "y": sourceY},  { "x": targetX,  "y": targetY}, 1/3);
 
         return {'points': [{ "x": sourceX,   "y": sourceY},  { "x": support.x,  "y": support.y}, { "x": targetX,  "y": targetY}],
             'slope': support.m};
@@ -388,7 +389,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         const lg = path
             .selectAll('.labelGroup')
             .selectAll('.edgeLetter')
-            .data(link => link.label.split(' ').filter(c => c.length > 0).map((c, i) => new Tuple(new Link(link.source, link.target, c, link.bidirectional, link.up), i - link.label.length/4)),
+            .data(link => link.label.split(' ').filter(c => c.length > 0).map((c, i) => new Tuple(new Link(link.source, link.target, c, link.bidirectional, link.selftransition), i - link.label.length/4)),
                 d => '' + d.first.source.id + d.first.target.id + d.first.label + d.second)
 
         lg.exit().remove();
@@ -741,13 +742,36 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         svg.selectAll('.simple').remove();
         svg.selectAll('.edges').remove();
         svg.selectAll('.regex').remove();
+        svg.selectAll('.clearGroup').remove();
         // So you don't delete a node from a previous context
         deselectAll();
 
         if(newContext === root){
             // Remove header from the top
-            svg.selectAll('.header').remove();
+            svg.selectAll('.boundingBox').remove();
             svg.selectAll('.stopEvents').remove();
+            const buttonText = 'Clear Canvas'
+            const buttonHeight = 25;
+            const clearGroup = svg.append('g')
+                .classed('clearGroup', true)
+                .on('mousedown', function(){
+                    const copy = root.desc;
+                    d3.event.stopPropagation();
+                    reset();
+                    setRegex(copy);
+                });
+            clearGroup.append('text')
+                .text(buttonText);
+            const buttonWidth = clearGroup.select('text').node().getComputedTextLength() * 1.2;
+            clearGroup.insert('rect', 'text')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('width',  buttonWidth)
+                .attr('height', buttonHeight);
+            clearGroup.select('text')
+                .attr('x', buttonWidth/2)
+                .attr('y', buttonHeight/2 + 5);
+            clearGroup.attr('transform', `translate(${width - buttonWidth - 2}, ${2})`);
         }
         else {
             // Create header if it doesn't exist
@@ -761,16 +785,19 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .attr('fill', 'white')
                 .on('mousedown', () => d3.event.stopPropagation());
 
-            svg.selectAll('.header').remove();
-            let header = svg.selectAll('.header').data([newContext], (d) => d.id);
+            svg.selectAll('.boundingBox').remove();
+            let header = svg.selectAll('.boundingBox').data([newContext], (d) => d.id);
             // header.exit().remove();
             // Header gets rendered from scratch every time
-            headerGroup = header.enter()
+            const boxGroup = header.enter()
                 .append('g')
-                .classed('header', true)
-                .attr('transform', `translate(${(width - BlockNodeStatic.maximizedWidth)/2}, ${(height - BlockNodeStatic.maximizedHeight)/2})`);
-
-            headerGroup
+                .classed('boundingBox', true)
+                .attr('transform', `translate(${(width - BlockNodeStatic.maximizedWidth)/2}, ${(height - BlockNodeStatic.maximizedHeight)/2})`)
+                
+            const bannerGroup = boxGroup.append('g')
+                .classed('bannerGroup', true)
+                .on('mousedown', () => d3.event.stopPropagation());
+            bannerGroup
                 .append('rect')
                 .classed('banner', true)
                 .attr('width', BlockNodeStatic.maximizedWidth)
@@ -780,9 +807,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .style('stroke', '#2f3033')
                 //color
                 .style('fill', lightgreen)
-                .on('mousedown', () => d3.event.stopPropagation());
             // Append Frame
-            headerGroup
+            boxGroup
                 .append('rect')
                 .attr('width', BlockNodeStatic.maximizedWidth)
                 .attr('height', BlockNodeStatic.maximizedHeight - BlockNodeStatic.headerHeight)
@@ -792,7 +818,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .style('stroke', '#262626');
             // Header Text
             let compoundWidth =
-                headerGroup.append('text')
+                bannerGroup.append('text')
                     .classed('desc', true)
                     .attr('x', BlockNodeStatic.maximizedWidth/2)
                     .attr('y', BlockNodeStatic.headerHeight/2 + 6)
@@ -806,7 +832,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 for(let i = contextStack.length - 1; i >= 0; i--){// Math.max(0, contextStack.length - 3)
                     const inter = 24;
                     const block = contextStack[i];
-                    const smallRectGroup = headerGroup.append('g').classed('smallRect', true);
+                    const smallRectGroup = bannerGroup.append('g').classed('smallRect', true);
                     smallRectGroup.data([contextStack[i]], (d) => d.id)
                     const slotWidth = smallRectGroup.append('text')
                         // .style('font-size', '18')
@@ -823,7 +849,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                         .style('stroke', '#2f3033')
                         .style('cursor', 'pointer')
                         .on('mousedown', () => {
-                            d3.event.stopPropagation();
                             while(contextStack.pop() !== block);
                             replaceContext(block);
                         })
@@ -840,7 +865,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                     // Calculations so we do not overfill the header with boxes
                     const whiteSpaceSide = (width - BlockNodeStatic.maximizedWidth)/2;
                     const dotsWidth = i > 1 ? 46 : 0;
-                    const nextBlockEstimate = i > 0 ? contextStack[i - 1].desc.length * 10 : 0;
+                    const nextBlockEstimate = i > 0 ? contextStack[i - 1].desc.length * 12 : 0;
                     // Last element, still a couple to go
                     if(compoundWidth > BlockNodeStatic.maximizedWidth/2 - inter - dotsWidth - whiteSpaceSide - nextBlockEstimate && i !== 0){
                         smallRectGroup.append('path')
@@ -857,41 +882,37 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                     }
                 }
             }
-            // Header Return button
+            // Return button
             const buttonWidth = 50;
             const buttonHeight = 25;
             const rightPadding = 25;
             const inter = 20;
-            headerGroup.append('g')
+            bannerGroup.append('g')
                 .attr('class', 'returnGroup boxbutton')
                 .attr('transform', `translate(${BlockNodeStatic.maximizedWidth - buttonWidth/2 - rightPadding}, ${BlockNodeStatic.headerHeight/2})`);
-            const returnGroup = headerGroup.selectAll('.returnGroup');
+            const returnGroup = bannerGroup.selectAll('.returnGroup');
             returnGroup.append('rect')
                 .attr('width', buttonWidth)
                 .attr('height', buttonHeight)
                 .attr('x', -buttonWidth/2)
                 .attr('y',  -buttonHeight/2)
-                .on('mousedown', () => {
-                    d3.event.stopPropagation();
-                    popContext();
-                });
+                .on('mousedown', popContext);
             returnGroup.append('text')
                 .attr('x', 0)
                 .attr('y', 5)
                 .text('Return');
 
             // Home Button
-            headerGroup.append('g')
+            bannerGroup.append('g')
                 .attr('class', 'homeGroup boxbutton')
                 .attr('transform', `translate(${BlockNodeStatic.maximizedWidth - buttonWidth*3/2 - rightPadding - inter}, ${BlockNodeStatic.headerHeight/2})`);
-            const homeGroup = headerGroup.selectAll('.homeGroup');
+            const homeGroup = bannerGroup.selectAll('.homeGroup');
             homeGroup.append('rect')
                 .attr('width', buttonWidth)
                 .attr('height', buttonHeight)
                 .attr('x', -buttonWidth/2)
                 .attr('y',  -buttonHeight/2)
                 .on('mousedown', () => {
-                    d3.event.stopPropagation();
                     while(contextStack.length > 1){
                         contextStack.pop();
                         showStackTrace.pop();
@@ -902,6 +923,25 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .attr('x', 0)
                 .attr('y', 5)
                 .text('Home');
+
+            // Reset button
+            bannerGroup.append('g')
+                .attr('class', 'resetGroup clearGroup')
+                .attr('transform', `translate(${BlockNodeStatic.maximizedWidth - buttonWidth*5/2 - rightPadding - 2*inter}, ${BlockNodeStatic.headerHeight/2})`);
+            const resetGroup = bannerGroup.selectAll('.resetGroup');
+            resetGroup.append('rect')
+            .attr('width', buttonWidth)
+            .attr('height', buttonHeight)
+            .attr('x', -buttonWidth/2)
+            .attr('y',  -buttonHeight/2)
+            .on('mousedown', () => {
+                syncClear();
+                restart();
+            });
+            resetGroup.append('text')
+                .attr('x', 0)
+                .attr('y', 5)
+                .text('Reset');
         }
 
         currentContext.force.stop();
@@ -916,8 +956,12 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         }
 
         // Don't render toolbar for simple automata
-        if(blocksArr.length > 0 && blockAutomaton)
-            toolbar.render();
+        if(blockAutomaton){
+            if(blocksArr.length > 0)
+                toolbar.render();
+            else
+                toolbar.hide();
+        }
 
         newContext.force.restart();
         currentContext = newContext;
@@ -927,9 +971,22 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         circle = svg.append('svg:g').classed('simple', true).selectAll('g');
         rect = svg.append('svg:g').classed('regex', true).selectAll('g');
         // Moving dragline so it is not covered by the white rectangle
-        $('.dragGroup').insertAfter('.header');
+        $('.dragGroup').insertAfter('.boundingBox');
 
         restart();
+    }
+
+    function syncClear(){
+        blocksArr.forEach((d) => {
+            if(currentContext.desc === d.first.desc){
+                d.first.links.length = 0;
+                d.first.nodes = d.first.nodes.filter(node => node.initial);
+                if(d.first.nodes.length === 1){
+                   d.first.nodes[0].x = width/6;
+                   d.first.nodes[0].y = height/2;                
+                }
+            }
+        })
     }
 
     function syncNode(node){
@@ -990,12 +1047,10 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             }
             else if(!reverseLink){
                 newLink.bidirectional = false;
-                newLink.up = source < target;
             }
             else{
                 newLink.bidirectional = true;
                 reverseLink.bidirectional = true;
-                newLink.up = source < target;
             }
             currentContext.links.push(newLink);
         }
@@ -1031,7 +1086,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                     }
                 })
                 if(!found)
-                    d.first.links.push(new Link(source, target, link.label, link.bidirectional, link.up));
+                    d.first.links.push(new Link(source, target, link.label, link.bidirectional, link.selftransition));
                 // Making reverse link bidirectional (curved)
                 if(link.bidirectional)
                     d.first.links.forEach((l) => {
@@ -1135,7 +1190,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 twin.first.links.forEach(link => {
                     const source = newBlockNodes[twin.first.nodes.indexOf(link.source)];
                     const target = newBlockNodes[twin.first.nodes.indexOf(link.target)];
-                    newBlockLinks.push(new Link(source, target, link.label, link.bidirectional, link.up));
+                    const l = new Link(source, target, link.label, link.bidirectional, link.selftransition);
+                    newBlockLinks.push(l);
                 })
             }
             return new Tuple(new BlockNode(++lastNodeId, false, desc, x, y, newBlockNodes, newBlockLinks), false);
@@ -1350,6 +1406,10 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 restart();
             }
         }
+        this.hide = function(){
+            this.svg.selectAll('.toolbarGroup').remove();
+        }
+
         this.render = function(){
             let lastTime = 0;
             let scrollPosition = 0;
@@ -1427,8 +1487,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             });
         }
     }
-
-    /***************************************** */
 
     /*************** Context menu declarations ******************/
 
@@ -1516,12 +1574,9 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         }
     }]
 
-    /********************************************************** */
+    /***************Initialization ******************/
 
-    /**********************
-     * app starts here
-     */
-        // We only need a toolbar for a block automaton
+    // We only need a toolbar for a block automaton
     let toolbar = null;
     if(blockAutomaton)
         toolbar = new Toolbar();
@@ -1543,10 +1598,12 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     d3.select(window)
         .on('keydown', keydown)
         .on('keyup', keyup);
-    restart();
+    replaceContext(root);
 
-    this.reset = function(){
-        this.clear();
+    /*****************API****************** */
+
+    reset = function(){
+        clear();
 
         const initial = new SimpleNode(++lastNodeId, false, width/6, height/2, true);
         root.nodes.push(initial);
@@ -1563,41 +1620,93 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     }
     // Alphabet should be set in the beginning
     // Calling this function RESETS the WHOLE AUTOMATON
-    this.setAlphabet = function(alpha){
+    setAlphabet = function(alpha){
         // alpha is a string
         alphabet = alpha.split(' ').filter(d => d.length > 0);
-        this.reset();
+        reset();
     }
-    this.setAlphabetArray = function(alpha){
-        this.setAlphabet(alpha.join(' '));
+    setAlphabetArray = function(alpha){
+        setAlphabet(alpha.join(' '));
     }
-    this.setEpsilon = function(flag){
+    setEpsilon = function(flag){
         if(deterministic)
             return;
         epsilon = flag;
-        this.reset();
+        reset();
     }
 
-    this.exportAlphabet = function(){
+    exportAlphabet = function(){
         let alpha = "	<alphabet>\n";
         alphabet.forEach(d => alpha = alpha + " <symbol>" + d + "</symbol>\n");
         alpha = alpha + "	</alphabet>\n";
         return alpha;
     }
 
-    this.setRegex = function(regex){
+    setRegex = function(regex){
         root.desc = regex;
         restart();
     }
 
-    this.exportAutomaton = function(){
-        const alpha = this.exportAlphabet();
+    exportAutomaton = function(){
+        const alpha = exportAlphabet();
         const isBlockAutomaton = `<automatonType>${blockAutomaton}</automatonType>\n`;
         const isDeterministic = `<deterministic>${deterministic}</deterministic>\n`
         const epsilonTrasitions = `<epsilon>${epsilon}</epsilon>\n`;
         const automaton = root.export();
         return `<automaton>\n ${isBlockAutomaton} ${isDeterministic} ${epsilonTrasitions} ${alpha} ${automaton} </automaton>`;
     }
+
+    // Clears everything but the alphabet
+    clear = function(){
+        force.stop();
+        // Arrays
+        blocksArr.length = 0;
+        contextStack.length = 0;
+        showStackTrace.length = 0;
+        // Vars
+        lastNodeId = 0;
+        // We keep the root
+        root.desc = "";
+        root.nodes.length = 0;
+        root.links.length = 0;
+        resetMouseVars();
+    }
+
+    lockCanvas = function(){
+        d3.select(container).classed('locked', true);
+    }
+
+    setAutomaton = function(automaton){
+        const xmlAut = $.parseXML(automaton);
+        clear();
+        // Getting alphabet
+        alphabet.length = 0;
+        $(xmlAut).find('alphabet').children().each(function(i, d){
+            alphabet.push($(d).text());
+        });
+        // Setting configuration variables
+        blockAutomaton = $(xmlAut).find('automatonType').text() === 'true' ? true : false;
+        epsilon = $(xmlAut).find('epsilon').text() === 'true' ? true : false;
+        deterministic = $(xmlAut).find('deterministic').text() === 'true' ? true : false;
+        menuEmptyArea = blockAutomaton ? menuEmptyAreaBlock : menuEmptyAreaClassic;
+        svg.on('contextmenu', d3.contextMenu(menuEmptyArea, deselectAll));
+        if(blockAutomaton && !toolbar)
+            toolbar = new Toolbar();
+
+        lastNodeId = root.set($(xmlAut).find('block').first());
+        replaceContext(root);
+    }
+
+    this.reset = reset;
+    this.setAlphabet = setAlphabet;
+    this.setAlphabetArray = setAlphabetArray;
+    this.setEpsilon = setEpsilon;
+    this.exportAlphabet = exportAlphabet;
+    this.setRegex = setRegex;
+    this.exportAutomaton = exportAutomaton;
+    this.clear = clear;
+    this.lockCanvas = lockCanvas;
+    this.setAutomaton = setAutomaton;
 
     /***************Testing methods************ */
 
@@ -1622,48 +1731,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     }
 
     /******************************************** */
-
-    // Clears everything but the alphabet
-    this.clear = function(){
-        force.stop();
-        // Arrays
-        blocksArr.length = 0;
-        contextStack.length = 0;
-        showStackTrace.length = 0;
-        root.nodes.length = 0;
-        root.links.length = 0;
-        // Vars
-        lastNodeId = 0;
-        // We keep the root
-        root.desc = "";
-        resetMouseVars();
-    }
-
-    this.lockCanvas = function(){
-        d3.select(container).classed('locked', true);
-    }
-
-    this.setAutomaton = function(automaton){
-        const xmlAut = $.parseXML(automaton);
-        this.clear();
-        // Getting alphabet
-        alphabet.length = 0;
-        $(xmlAut).find('alphabet').children().each(function(i, d){
-            alphabet.push($(d).text());
-        });
-        // Setting configuration variables
-        blockAutomaton = $(xmlAut).find('automatonType').text() === 'true' ? true : false;
-        epsilon = $(xmlAut).find('epsilon').text() === 'true' ? true : false;
-        deterministic = $(xmlAut).find('deterministic').text() === 'true' ? true : false;
-        menuEmptyArea = blockAutomaton ? menuEmptyAreaBlock : menuEmptyAreaClassic;
-        svg.on('contextmenu', d3.contextMenu(menuEmptyArea, deselectAll));
-        if(blockAutomaton && !toolbar)
-            toolbar = new Toolbar();
-
-        lastNodeId = root.set($(xmlAut).find('block').first());
-        replaceContext(root);
-        restart();
-    }
 }
 
 let canvas = new BlockCanvas('body', [960, 540], false, true, true);
