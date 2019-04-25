@@ -719,7 +719,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             .text(letter)
     }
 
-    function pushContext(newContext, hierachical = true){
+    function pushContext(newContext, hierachical = currentShow){
         if(newContext === currentContext)
             return;
         contextStack.push(currentContext);
@@ -1358,7 +1358,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         // Prevent default interferes with filling out forms
         //d3.event.preventDefault();
 
-        if (lastKeyDown !== -1) return;
+        if (lastKeyDown !== -1 || $(':focus').length > 0) return;
         lastKeyDown = d3.event.keyCode;
 
         if (!selectedNode && !selectedLink) return;
@@ -1600,9 +1600,9 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         .on('keyup', keyup);
     replaceContext(root);
 
-    /*****************API****************** */
+    /*****************API***************** */
 
-    reset = function(){
+    const reset = function(){
         clear();
 
         const initial = new SimpleNode(++lastNodeId, false, width/6, height/2, true);
@@ -1620,34 +1620,34 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     }
     // Alphabet should be set in the beginning
     // Calling this function RESETS the WHOLE AUTOMATON
-    setAlphabet = function(alpha){
+    const setAlphabet = function(alpha){
         // alpha is a string
         alphabet = alpha.split(' ').filter(d => d.length > 0);
         reset();
     }
-    setAlphabetArray = function(alpha){
+    const setAlphabetArray = function(alpha){
         setAlphabet(alpha.join(' '));
     }
-    setEpsilon = function(flag){
+    const setEpsilon = function(flag){
         if(deterministic)
             return;
         epsilon = flag;
         reset();
     }
 
-    exportAlphabet = function(){
+    const exportAlphabet = function(){
         let alpha = "	<alphabet>\n";
         alphabet.forEach(d => alpha = alpha + " <symbol>" + d + "</symbol>\n");
         alpha = alpha + "	</alphabet>\n";
         return alpha;
     }
 
-    setRegex = function(regex){
+    const setRegex = function(regex){
         root.desc = regex;
         restart();
     }
 
-    exportAutomaton = function(){
+    const exportAutomaton = function(){
         const alpha = exportAlphabet();
         const isBlockAutomaton = `<automatonType>${blockAutomaton}</automatonType>\n`;
         const isDeterministic = `<deterministic>${deterministic}</deterministic>\n`
@@ -1657,7 +1657,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     }
 
     // Clears everything but the alphabet
-    clear = function(){
+    const clear = function(){
         force.stop();
         // Arrays
         blocksArr.length = 0;
@@ -1665,6 +1665,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         showStackTrace.length = 0;
         // Vars
         lastNodeId = 0;
+        currentShow = true;
         // We keep the root
         root.desc = "";
         root.nodes.length = 0;
@@ -1672,11 +1673,11 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         resetMouseVars();
     }
 
-    lockCanvas = function(){
+    const lockCanvas = function(){
         d3.select(container).classed('locked', true);
     }
 
-    setAutomaton = function(automaton){
+    const setAutomaton = function(automaton){
         const xmlAut = $.parseXML(automaton);
         clear();
         // Getting alphabet
@@ -1733,7 +1734,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     /******************************************** */
 }
 
-let canvas = new BlockCanvas('body', [960, 540], false, true, true);
+let canvas = new BlockCanvas('body', [960, 540], true, false, false);
 
 // canvas.setAutomaton(`<automaton>
 // <automatonType>true</automatonType>
