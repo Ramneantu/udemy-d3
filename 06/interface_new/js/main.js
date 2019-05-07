@@ -28,8 +28,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     let alphabet = ['a', 'b', 'c', 'd'];
     // init D3 force layout
     let force = d3.forceSimulation()
-        .force('link', d3.forceLink().id((d) => d.id).distance(150))
         .force('charge', d3.forceManyBody().strength(-500).distanceMax(100))
+        // .force('link', d3.forceLink().id((d) => d.id).distance(150))
         // .force('x', d3.forceX(width / 2))
         // .force('y', d3.forceY(height / 2))
         .on('tick', tick.bind(this, 0, 0, width, height));
@@ -671,7 +671,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         // set the graph in motion
         currentContext.force
             .nodes(currentContext.nodes)
-            .force('link').links(currentContext.links);
+            // .force('link').links(currentContext.links);
 
         currentContext.force.alpha(.9).alphaDecay(.04).restart();
         if(!draggingNode)
@@ -793,7 +793,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .append('g')
                 .classed('boundingBox', true)
                 .attr('transform', `translate(${(width - BlockNodeStatic.maximizedWidth)/2}, ${(height - BlockNodeStatic.maximizedHeight)/2})`)
-                
+
             const bannerGroup = boxGroup.append('g')
                 .classed('bannerGroup', true)
                 .on('mousedown', () => d3.event.stopPropagation());
@@ -815,6 +815,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .attr('x', 0)
                 .attr('y', BlockNodeStatic.headerHeight)
                 .attr('fill', '#f2f2f2')
+                // .attr('fill', 'white')
                 .style('stroke', '#262626');
             // Header Text
             let compoundWidth =
@@ -930,14 +931,14 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .attr('transform', `translate(${BlockNodeStatic.maximizedWidth - buttonWidth*5/2 - rightPadding - 2*inter}, ${BlockNodeStatic.headerHeight/2})`);
             const resetGroup = bannerGroup.selectAll('.resetGroup');
             resetGroup.append('rect')
-            .attr('width', buttonWidth)
-            .attr('height', buttonHeight)
-            .attr('x', -buttonWidth/2)
-            .attr('y',  -buttonHeight/2)
-            .on('mousedown', () => {
-                syncClear();
-                restart();
-            });
+                .attr('width', buttonWidth)
+                .attr('height', buttonHeight)
+                .attr('x', -buttonWidth/2)
+                .attr('y',  -buttonHeight/2)
+                .on('mousedown', () => {
+                    syncClear();
+                    restart();
+                });
             resetGroup.append('text')
                 .attr('x', 0)
                 .attr('y', 5)
@@ -948,8 +949,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         // Initializing new simulation if we are entering for the first time
         if(!newContext.force){
             newContext.force = d3.forceSimulation()
-                .force('link', d3.forceLink().id((d) => d.id).distance(150))
                 .force('charge', d3.forceManyBody().strength(-500).distanceMax(100))
+                // .force('link', d3.forceLink().id((d) => d.id).distance(150))
                 // .force('x', d3.forceX(width / 2))
                 // .force('y', d3.forceY(height / 2))
                 .on('tick', tick.bind(this, (width - BlockNodeStatic.maximizedWidth)/2, (height - BlockNodeStatic.maximizedHeight)/2 + BlockNodeStatic.headerHeight, BlockNodeStatic.maximizedWidth, BlockNodeStatic.maximizedHeight - BlockNodeStatic.headerHeight));
@@ -982,8 +983,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 d.first.links.length = 0;
                 d.first.nodes = d.first.nodes.filter(node => node.initial);
                 if(d.first.nodes.length === 1){
-                   d.first.nodes[0].x = width/6;
-                   d.first.nodes[0].y = height/2;                
+                    d.first.nodes[0].x = width/6;
+                    d.first.nodes[0].y = height/2;
                 }
             }
         })
@@ -1576,7 +1577,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
     /***************Initialization ******************/
 
-    // We only need a toolbar for a block automaton
+        // We only need a toolbar for a block automaton
     let toolbar = null;
     if(blockAutomaton)
         toolbar = new Toolbar();
@@ -1734,7 +1735,7 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
     /******************************************** */
 }
 
-let canvas = new BlockCanvas('body', [960, 540], true, false, false);
+let canvas = new BlockCanvas('body', [960, 540], false, true, true);
 
 // canvas.setAutomaton(`<automaton>
 // <automatonType>true</automatonType>
