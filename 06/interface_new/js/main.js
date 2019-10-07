@@ -1199,11 +1199,15 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                     newBlockLinks.push(l);
                 })
             }
-            return new Tuple(new BlockNode(++lastNodeId, false, desc, x, y, newBlockNodes, newBlockLinks), false);
+            const newTuple = new Tuple(new BlockNode(++lastNodeId, twin.first.reflexive, desc, x, y, newBlockNodes, newBlockLinks), false);
+            // Moved insert here from closeform to allow recursive insertion into blockArr
+            blocksArr.push(newTuple);
+            return newTuple;
         }
-        // console.log('no twin');
         // I don't think we need to add a simulation
-        return new Tuple(new BlockNode(++lastNodeId, false, desc, x, y, [new SimpleNode(++lastNodeId, false, width/6, height/2, true)], newBlockLinks), true);
+        const newTuple = new Tuple(new BlockNode(++lastNodeId, false, desc, x, y, [new SimpleNode(++lastNodeId, false, width/6, height/2, true)], newBlockLinks), true);
+        blocksArr.push(newTuple);
+        return newTuple;
     }
 
     function removeForm(){
@@ -1214,7 +1218,9 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
     function closeForm(){
         // Invalid description
-        const desc = $('#desc').val();
+        let desc = $('#desc').val();
+        while(desc.charAt(0) === '(' && desc.charAt(desc.length - 1) === ')')
+            desc = desc.substring(1, desc.length - 1);
         if(desc === currentContext.desc || !validBlock(desc) || desc.length === 0){
             $('#desc')
                 .css('background', 'rgba(255,0,0,0.7)')
@@ -1229,7 +1235,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         //Try with event
         const nodeTuple = buildBlock(desc);
         currentContext.nodes.push(nodeTuple.first);
-        blocksArr.push(nodeTuple);
         toolbar.render();
         syncNode(nodeTuple.first);
         restart();
@@ -1533,6 +1538,13 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         title: 'Expand',
         action: function(elm, d, i){
             pushContext(d);
+        }
+    }, {
+        title: 'Toggle final',
+        action: function(elm, d, i){
+            d.reflexive = !d.reflexive;
+            syncNode(d);
+            restart();
         }
     }, {
         title: 'Remove',

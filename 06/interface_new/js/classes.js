@@ -36,8 +36,12 @@ class BlockNode extends Node {
       })
       let acc = '<acceptingSet>\n';
       this.nodes.forEach(d => {
-          if(d.reflexive)
-              acc += "<state sid='" + d.id + "'/>\n"
+          if(d.reflexive){
+                if(!d.isBlock)
+                    acc += "<state sid='" + d.id + "'/>\n"
+                else
+                    acc += `<block sid='${d.id}'/>`
+                }
       })
       acc += '</acceptingSet>\n';
       let transitions = '<transitionSet>\n';
@@ -50,7 +54,7 @@ class BlockNode extends Node {
       })
       transitions += '</transitionSet>\n';
 
-      return `<block sid='${this.id}' regex='${this.desc}' posX='${this.x}' posY='${this.y}'>\n` + states + transitions + acc + initialState + '</block>\n';
+      return `<block sid='${this.id}' regex='${this.desc}' final='${this.reflexive}' posX='${this.x}' posY='${this.y}'>\n` + states + transitions + acc + initialState + '</block>\n';
   }
   // Returns the maximum index of any node
   set(xml){

@@ -107,10 +107,15 @@ rect.block {
 rect.block.reflexive {
   stroke: #000 !important;
   stroke-width: 3.5px;
+  fill: rgb(110, 207, 81) !important;
 }
 
 rect.block.selected {
   fill: lightblue !important;
+}
+
+rect.block.selected.reflexive {
+  fill: lightgreen !important;
 }
 
 rect.form-rect {
