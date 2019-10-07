@@ -73,6 +73,8 @@ path.link.hidden {
 circle.node {
   stroke-width: 1.5px;
   cursor: pointer;
+  fill: rgb(82, 177, 255);
+  stroke: rgb(34, 77, 112);
 }
 
 circle.mouseTarget {
@@ -84,16 +86,42 @@ circle.mouseTarget {
 circle.node.reflexive {
   stroke: #000 !important;
   stroke-width: 3.5px;
+  fill: rgb(110, 207, 81) !important;
+}
+
+circle.node.selected {
+  fill: lightblue !important;
+}
+
+circle.node.selected.reflexive {
+  fill: lightgreen !important;
 }
 
 rect.block {
   stroke-width: 1.5px;
   cursor: pointer;
+  fill:  rgb(82, 177, 255);
+  stroke: rgb(34, 77, 112);
 }
 
 rect.block.reflexive {
   stroke: #000 !important;
   stroke-width: 3.5px;
+}
+
+rect.block.selected {
+  fill: lightblue !important;
+}
+
+rect.form-rect {
+  stroke-width: 1.5px;
+  fill:  rgb(82, 177, 255);
+  stroke: rgb(34, 77, 112);
+}
+
+rect.banner {
+  stroke: #2f3033;
+  fill: rgb(110, 207, 81);
 }
 
 text {

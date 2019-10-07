@@ -69,7 +69,6 @@
  */
 let contextOpen;
 d3.contextMenu = function (menu, openCallback) {
-
     // create the div element that will hold the context menu
     // top level context menu
 	d3.select('body').selectAll('.d3-context-menu').data([1])

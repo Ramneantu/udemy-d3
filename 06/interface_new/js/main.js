@@ -145,36 +145,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
     // Params: relative - distance from midpoint seen as a fraction of the distance btw points
     //         absolute - absolute distance from midpoint
-
-    // function perpendicularBisector(p1, p2, up, relative, absolute = 0, locked = true) {
-
-    //     const distSquared = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
-    //     const midpointX = (p1.x + p2.x) / 2;
-    //     const midpointY = (p1.y + p2.y) / 2;
-    //     let denominator = (p2.y - p1.y);
-    //     if(denominator === 0)
-    //         denominator = .001
-    //     const m = -(p2.x - p1.x) / denominator;
-    //     const intercept = midpointY - m * midpointX;
-    //     let dx = Math.sqrt((distSquared * relative * relative + absolute * absolute) / ((m*m + 1)));
-
-    //     let orient = (up ? 1 : -1);
-    //     if(locked){
-    //         // Label always on the same side of the arrow
-    //         if(p1.x > p2.x && up || p1.x <= p2.x && !up)
-    //             orient = -orient;
-    //         supportX = midpointX + (orient * m > 0 ? dx : -dx);
-    //         supportY = (supportX * m + intercept);
-    //     }
-    //     else{
-    //         // Label always on top
-    //         supportX = midpointX + (orient > 0 ? dx : -dx);
-    //         supportY = (supportX * m + intercept);
-    //     }
-
-    //     return {'x':supportX, 'y':supportY, 'm':m};
-    // }
-
     function perpendicularBisector(p1, p2, relative, absolute = 0, locked = true) {
 
         const distSquared = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
@@ -183,7 +153,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         let denominator = (p2.y - p1.y);
         if(denominator === 0)
             denominator = .001
-        const m = -(p2.x - p1.x) / denominator;
+        let numerator = -(p2.x - p1.x);
+        const m = numerator / denominator;
         const intercept = midpointY - m * midpointX;
         let dx = Math.sqrt((distSquared * relative * relative + absolute * absolute) / ((m*m + 1)));
 
@@ -199,15 +170,20 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             supportX = midpointX + (m > 0 ? -dx : dx);
             supportY = (supportX * m + intercept);
         }
-
-        return {'x':supportX, 'y':supportY, 'm':m};
+        return {'x':supportX, 'y':supportY, 'side':(supportY-p1.y)*(p2.x-p1.x) > (supportX-p1.x)*(p2.y-p1.y)};
     }
 
     function placeLabel(link){
         const lineData = getLinePoints(link);
-        const slope = (lineData.points[2].y - lineData.points[0].y) / (lineData.points[2].x - lineData.points[0].x);
-        if(link.selftransition)
-            return {'x':link.source.x, 'y':link.target.y - 80, 'm':0};
+        if(link.selftransition){
+            const loopHeight = 60;
+            const offset = 20;
+            let x = link.source.x + Math.cos(Math.PI/2 - link.rotation * Math.PI/2) * (loopHeight + offset);
+            const y = link.source.y - Math.sin(Math.PI/2 - link.rotation * Math.PI/2) * (loopHeight + offset);
+            if(link.source.isBlock)
+                x += (2 - link.rotation) % 2 * 20;
+            return {'x':x, 'y':y, 'm':0};
+        }
         if(link.bidirectional)
             return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, 1/3, 15);
         return perpendicularBisector({'x':lineData.points[0].x, 'y':lineData.points[0].y}, {'x':lineData.points[2].x, 'y':lineData.points[2].y}, 0, 8, false);
@@ -221,8 +197,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         const normX = deltaX / dist;
         const normY = deltaY / dist;
         const sourcePadding = SimpleNodeStatic.radius;
-        // const sourcePadding = link.left ? SimpleNodeStatic.radius * 1.25 : SimpleNodeStatic.radius;
-        // const targetPadding = link.right ? SimpleNodeStatic.radius * 1.25 : SimpleNodeStatic.radius;
         const targetPadding = SimpleNodeStatic.radius * 1.15;
         let sourceX = link.source.x + (sourcePadding * normX);
         let sourceY = link.source.y + (sourcePadding * normY);
@@ -286,20 +260,36 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             // We need more points to define the curve in this case
             const loopHeight = 60;
             const loopWidth = 60;
-            sourceX = targetX = link.source.x;
-            sourceY = link.source.y - sourcePadding;
-            targetY = link.source.y - targetPadding + (link.target.isBlock ? 1 : 2);
+            sourceX = link.source.x - sourcePadding * Math.cos(2*Math.PI/6);
+            targetX = link.source.x - targetPadding * Math.cos(4*Math.PI/6);
+            sourceY = link.source.y - sourcePadding * Math.sin(2*Math.PI/6);
+            targetY = link.source.y - targetPadding * Math.sin(4*Math.PI/6) - (link.target.isBlock ? 4 : 0);
             support = {'x':sourceX, 'y':sourceY - loopHeight};
             const left = {'x':sourceX - loopWidth/2, 'y':sourceY - loopHeight * .6};
-            const right = {'x':sourceX + loopWidth/2, 'y':sourceY - loopHeight * .6};
+            const right = {'x':sourceX + loopWidth/1.3, 'y':sourceY - loopHeight * .73};
             return {'points': [{ "x": sourceX,   "y": sourceY},  left, support, right, { "x": targetX,  "y": targetY}],
                 'slope': 0};
         }
-        if(link.bidirectional)
+        if(link.bidirectional){
+            // Adding support point for curved lines
             support = perpendicularBisector({ "x": sourceX,   "y": sourceY},  { "x": targetX,  "y": targetY}, 1/3);
-
+            // Adding space btw. beginning and end of diffferent arrows for simple nodes
+            let ang = Math.acos(normX);
+            if(normY < 0)
+                ang = -ang;
+            if(!link.source.isBlock){
+                ang += Math.PI/6;
+                sourceX = link.source.x + sourcePadding * Math.cos(ang);
+                sourceY = link.source.y + sourcePadding * Math.sin(ang);
+            }
+            if(!link.target.isBlock){
+                ang -= Math.PI/6;
+                targetX = link.target.x - targetPadding * Math.cos(ang);
+                targetY = link.target.y - targetPadding * Math.sin(ang);
+            }
+        }
         return {'points': [{ "x": sourceX,   "y": sourceY},  { "x": support.x,  "y": support.y}, { "x": targetX,  "y": targetY}],
-            'slope': support.m};
+            'side': support.side};
     }
 
     // Drawing an edge from one node to another
@@ -329,6 +319,16 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             return `translate(${d.x - BlockNodeStatic.minimizedWidth/2},${d.y - BlockNodeStatic.minimizedHeight/2})`;});
 
         path.selectAll('path').attr('d', (d) => drawEdge(d));
+        path.selectAll('.lineGroup')
+            .attr('transform', (d) => {
+                if(!d.selftransition)
+                    return;
+                else if(!d.source.isBlock)
+                    return `rotate(${d.rotation * 90}, ${d.source.x}, ${d.source.y})`;
+                else
+                    return `translate(${(2 - d.rotation) % 2 * 20}, 0), 
+                            rotate(${d.rotation * 90}, ${d.source.x}, ${d.source.y})`;
+            })
         path.selectAll('.labelGroup')
             .attr('transform', (d) => {
                 const coord = placeLabel(d);
@@ -348,7 +348,9 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         path = path.data(currentContext.links, d => '' + d.source.id + d.target.id);
 
         // update existing links
-        path.selectAll('.link').classed('selected', (d) => d === selectedLink)
+        path
+            .selectAll('.link')
+            .classed('selected', (d) => d === selectedLink)
             .style('marker-end', 'url(#end-arrow)');
         // In case we changed label
 
@@ -371,7 +373,13 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 selectedNode = null;
                 restart();
             })
-            .on('contextmenu', d3.contextMenu(menuLink))//deterministic ? null : d3.contextMenu(menuLink))
+            .each(function(d){
+                if(!d.selftransition)
+                    d3.select(this).on('contextmenu', d3.contextMenu(menuLink));
+                else
+                    d3.select(this).on('contextmenu', d3.contextMenu(menuSelf));
+            })
+            // .on('contextmenu', d3.contextMenu(menuLink))
             .append('svg:path')
             .attr('class', 'link')
             .classed('selected', (d) => d === selectedLink)
@@ -450,7 +458,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         circle.classed('initial', (d) => d.initial);
         circle
             .selectAll('.node')
-            .style('fill', (d) => (d === selectedNode) ? lightblue.brighter().toString() : lightblue)
+            // .style('fill', (d) => (d === selectedNode) ? lightblue.brighter().toString() : lightblue)
+            .classed('selected', (d) => d === selectedNode)
             .classed('reflexive', (d) => d.reflexive);
 
         // remove old nodes
@@ -494,9 +503,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         g.append('svg:circle')
             .attr('class', 'node')
             .attr('r', SimpleNodeStatic.radius)
-            .style('fill', (d) => (d === selectedNode) ? lightblue.brighter().toString() : lightblue)
-            .style('stroke', (d) => lightblue.darker().toString())
             .classed('reflexive', (d) => d.reflexive)
+            .classed('selected', (d) => d === selectedNode)
             .on('mouseover', function (d) {
                 if (!mousedownNode){// || d === mousedownNode){
                     d3.select(this.parentNode).selectAll('.haloGroup').attr('display', 'block');
@@ -564,8 +572,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
         rect = rect.data(currentContext.nodes.filter(el => el.isBlock), (d) => d.id);
         // update existing Blocks (reflexive & selected visual states)
         rect.selectAll('.block')
-            .style('fill', (d) => (d === selectedNode) ? lightgreen.brighter().toString() : lightgreen)
-            .classed('reflexive', (d) => d.reflexive);
+            .classed('reflexive', (d) => d.reflexive)
+            .classed('selected', (d) => d === selectedNode);
 
         // remove old nodes
         rect.exit().remove();
@@ -604,9 +612,8 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             .attr('class', 'block')
             .attr('height', BlockNodeStatic.minimizedHeight)
             .attr('width', BlockNodeStatic.minimizedWidth)
-            .style('fill', (d) => (d === selectedNode) ? lightgreen.brighter().toString() : lightgreen)
-            .style('stroke', (d) => lightgreen.darker().toString())
             .classed('reflexive', (d) => d.reflexive)
+            .classed('selected', (d) => d === selectedNode)
             .on('mouseover', function (d) {
                 if (!mousedownNode){// || d === mousedownNode)
                     d3.select(this.parentNode).selectAll('.overlayGroup').attr('display', 'block');
@@ -804,9 +811,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
                 .attr('height', BlockNodeStatic.headerHeight)
                 .attr('x', 0)
                 .attr('y', 0)
-                .style('stroke', '#2f3033')
-                //color
-                .style('fill', lightgreen)
             // Append Frame
             boxGroup
                 .append('rect')
@@ -1285,8 +1289,6 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             .attr('width', BlockNodeStatic.minimizedWidth)
             .attr('x', blockInsertCoordinates[0] - BlockNodeStatic.minimizedWidth/6)
             .attr('y', blockInsertCoordinates[1] - BlockNodeStatic.minimizedHeight/4)
-            .style('fill', lightgreen)
-            .style('stroke', lightgreen.darker().toString())
     }
 
     function mousemove() {
@@ -1562,6 +1564,23 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
             deselectAll();
         }
     }
+    ]
+
+    var menuSelf = [{
+        title: 'Remove entire edge',
+        action: function(elm, d, i){
+            selectedLink = d;
+            deleteSelected(d);
+            deselectAll();
+            }
+        } , {
+        title: 'Rotate edge',
+        action: function(elm, d, i){
+            d.rotation = (d.rotation + 1) % 4;
+            restart();
+            deselectAll();
+        }
+        }
     ]
 
     var menuLinkLetter = [{

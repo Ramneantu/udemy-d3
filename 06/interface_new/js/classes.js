@@ -145,6 +145,7 @@ class Link {
       this.right = true;
       this.bidirectional = bidirectional;
       this.selftransition = selftransition;
+      this.rotation = 0;
       // Letter
       this.label = label;
   }
