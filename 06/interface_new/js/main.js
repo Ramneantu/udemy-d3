@@ -1218,15 +1218,19 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
     function closeForm(){
         // Invalid description
+        // All label transformations here
         let desc = $('#desc').val();
         while(desc.charAt(0) === '(' && desc.charAt(desc.length - 1) === ')')
             desc = desc.substring(1, desc.length - 1);
+        // Making special chars uniform so that the sync still works
+        desc = desc.replace(/\\emptyset|\\emp/g, '∅')
+        desc = desc.replace(/\\epsilon|\\eps|\\e/g, 'ε')
         if(desc === currentContext.desc || !validBlock(desc) || desc.length === 0){
             $('#desc')
                 .css('background', 'rgba(255,0,0,0.7)')
                 .blur()
             return;
-        }
+        }        
 
         d3.selectAll('.input-field').style('display', 'none');
         formOpen = false;
@@ -1768,168 +1772,55 @@ function BlockCanvas(container, dimensions, deterministic = false, epsilon = tru
 
 let canvas = new BlockCanvas('body', [960, 540], false, true, true);
 
-// canvas.setAutomaton(`<automaton>
-// <automatonType>true</automatonType>
-// <epsilon>true</epsilon>
-//     <alphabet>
-// <symbol>a</symbol>
-// <symbol>b</symbol>
-// <symbol>c</symbol>
-// <symbol>d</symbol>
-// <symbol>e</symbol>
-//    </alphabet>
-// <block sid='0' regex='entire regex' posX='0' posY='0'>
-// <stateSet>
-// <state sid='1' initial='true' final='false' posX='189.9999999999999' posY='269.99999997204975'/>
-// <block sid='2' regex='b|c' posX='339.9999999999999' posY='270.0000000838503'>
-// <stateSet>
-// <state sid='3' initial='true' final='false' posX='242.2138382377868' posY='262.992192113752'/>
-// <block sid='4' regex='b' posX='376.99030119533785' posY='197.14915882508978'>
-// <stateSet>
-// <state sid='5' initial='true' final='false' posX='220.00822909811546' posY='270.8890108014536'/>
-// <state sid='8' initial='false' final='true' posX='369.9917709018844' posY='273.1109891985464'/>
-// </stateSet>
-// <transitionSet>
-// <transition tid='0'>
-// <from>5</from>
-// <to>8</to>
-// <label> b </label>
-// </transition>
-// </transitionSet>
-// <acceptingSet>
-// <state sid='8'/>
-// </acceptingSet>
-// <initialState><state sid='5' /></initialState>
-// </block>
-// <block sid='6' regex='c' posX='385.46772625602665' posY='307.47054153970976'>
-// <stateSet>
-// <state sid='7' initial='true' final='false' posX='192.70682117060272' posY='267.56600400590884'/>
-// <state sid='9' initial='false' final='true' posX='342.29317882939756' posY='256.43399599409116'/>
-// </stateSet>
-// <transitionSet>
-// <transition tid='0'>
-// <from>7</from>
-// <to>9</to>
-// <label> c </label>
-// </transition>
-// </transitionSet>
-// <acceptingSet>
-// <state sid='9'/>
-// </acceptingSet>
-// <initialState><state sid='7' /></initialState>
-// </block>
-// <block sid='10' regex='((a*|b*)cc*)*' posX='643' posY='245'>
-// <stateSet>
-// <state sid='11' initial='true' final='false' posX='160' posY='270'/>
-// <block sid='17' regex='((a*|b*)cc*)*(d|c*)+abc' posX='426' posY='255'>
-// <stateSet>
-// <state sid='16' initial='true' final='false' posX='160' posY='270'/>
-// <block sid='21' regex='((a*|b*)cc*)*(d|c*)+abcf' posX='477' posY='270'>
-// <stateSet>
-// <state sid='20' initial='true' final='false' posX='160' posY='270'/>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='20' /></initialState>
-// </block>
-// <block sid='25' regex='franko' posX='521' posY='174'>
-// <stateSet>
-// <state sid='24' initial='true' final='false' posX='160' posY='270'/>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='24' /></initialState>
-// </block>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='16' /></initialState>
-// </block>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='11' /></initialState>
-// </block>
-// </stateSet>
-// <transitionSet>
-// <transition tid='0'>
-// <from>3</from>
-// <to>4</to>
-// <label> ε </label>
-// </transition>
-// <transition tid='1'>
-// <from>3</from>
-// <to>6</to>
-// <label> ε </label>
-// </transition>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='3' /></initialState>
-// </block>
-// <block sid='13' regex='((a*|b*)cc*)*' posX='480' posY='405'>
-// <stateSet>
-// <state sid='12' initial='true' final='false' posX='160' posY='270'/>
-// <block sid='14' regex='((a*|b*)cc*)*(d|c*)+abc' posX='426' posY='255'>
-// <stateSet>
-// <state sid='15' initial='true' final='false' posX='160' posY='270'/>
-// <block sid='18' regex='((a*|b*)cc*)*(d|c*)+abcf' posX='477' posY='270'>
-// <stateSet>
-// <state sid='19' initial='true' final='false' posX='160' posY='270'/>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='19' /></initialState>
-// </block>
-// <block sid='22' regex='franko' posX='521' posY='174'>
-// <stateSet>
-// <state sid='23' initial='true' final='false' posX='160' posY='270'/>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='23' /></initialState>
-// </block>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='15' /></initialState>
-// </block>
-// </stateSet>
-// <transitionSet>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='12' /></initialState>
-// </block>
-// </stateSet>
-// <transitionSet>
-// <transition tid='0'>
-// <from>1</from>
-// <to>1</to>
-// <label> a </label>
-// </transition>
-// <transition tid='1'>
-// <from>1</from>
-// <to>2</to>
-// <label> ε </label>
-// </transition>
-// </transitionSet>
-// <acceptingSet>
-// </acceptingSet>
-// <initialState><state sid='1' /></initialState>
-// </block>
-// </automaton>`)
+canvas.setAutomaton(`<automaton>
+<automatonType>true</automatonType>
+<deterministic>false</deterministic>
+<epsilon>true</epsilon>
+    <alphabet>
+<symbol>a</symbol>
+<symbol>b</symbol>
+<symbol>c</symbol>
+<symbol>d</symbol>
+   </alphabet>
+<block sid='0' regex='entire regex' final='false' posX='0' posY='0'>
+<stateSet>
+<state sid='1' initial='true' final='false' posX='160' posY='270'/>
+<block sid='2' regex='\\e\\emp' final='true' posX='459' posY='158'>
+<stateSet>
+<state sid='3' initial='true' final='false' posX='160' posY='270'/>
+</stateSet>
+<transitionSet>
+</transitionSet>
+<acceptingSet>
+</acceptingSet>
+<initialState><state sid='3' /></initialState>
+</block>
+<block sid='4' regex='\\e\\e\\emp\\e' final='true' posX='526' posY='313'>
+<stateSet>
+<state sid='5' initial='true' final='false' posX='160' posY='270'/>
+</stateSet>
+<transitionSet>
+</transitionSet>
+<acceptingSet>
+</acceptingSet>
+<initialState><state sid='5' /></initialState>
+</block>
+<state sid='6' initial='undefined' final='false' posX='724' posY='199'/>
+</stateSet>
+<transitionSet>
+<transition tid='0'>
+<from>1</from>
+<to>2</to>
+<label>b</label>
+</transition>
+<transition tid='1'>
+<from>1</from>
+<to>4</to>
+<label>d</label>
+</transition>
+</transitionSet>
+<acceptingSet>
+<block sid='2'/><block sid='4'/></acceptingSet>
+<initialState><state sid='1' /></initialState>
+</block>
+</automaton>`)

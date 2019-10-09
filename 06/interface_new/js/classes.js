@@ -53,13 +53,14 @@ class BlockNode extends Node {
               + '</transition>\n';
       })
       transitions += '</transitionSet>\n';
-
-      return `<block sid='${this.id}' regex='${this.desc}' final='${this.reflexive}' posX='${this.x}' posY='${this.y}'>\n` + states + transitions + acc + initialState + '</block>\n';
+      // Removing special chars to avoid XML conflicts
+      const encodedDescription = this.desc.replace(/∅/g, '\\\\emp').replace(/ε/g, '\\\\e');
+      return `<block sid='${this.id}' regex='${encodedDescription}' final='${this.reflexive}' posX='${this.x}' posY='${this.y}'>\n` + states + transitions + acc + initialState + '</block>\n';
   }
   // Returns the maximum index of any node
   set(xml){
       // In the recursive case we set the description twice
-      this.desc = $(xml).attr('regex');
+      this.desc = $(xml).attr('regex').replace(/\\emptyset|\\emp/g, '∅').replace(/\\epsilon|\\eps|\\e/g, 'ε');
       this.nodes = new Array();
       this.links = new Array();
 
@@ -79,8 +80,8 @@ class BlockNode extends Node {
       // Setting blocks recursively
       $(xml).children('stateSet').children('block').each((i, d) => {
           const subBlock = new BlockNode( parseInt($(d).attr('sid')),
-              false,
-              $(d).attr('regex'),
+              $(d).attr('final') === "true" ? true : false,
+              $(d).attr('regex').replace(/\\\\emptyset|\\\\emp/g, '∅').replace(/\\\\epsilon|\\\\eps|\\\\e/g, 'ε'),
               parseFloat($(d).attr('posX')),
               parseFloat($(d).attr('posY'))
           )
